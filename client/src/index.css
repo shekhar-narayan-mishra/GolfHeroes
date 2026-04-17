@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+/* ── Custom Design Tokens ─────────────────────────────────── */
+@theme {
+  --color-brand-50: #eef6ff;
+  --color-brand-100: #d9eaff;
+  --color-brand-200: #bcdbff;
+  --color-brand-300: #8ec5ff;
+  --color-brand-400: #59a5ff;
+  --color-brand-500: #3381ff;
+  --color-brand-600: #1b5ff5;
+  --color-brand-700: #144ae1;
+  --color-brand-800: #173db6;
+  --color-brand-900: #19378f;
+  --color-brand-950: #0f1f52;
+
+  --color-surface-0: #0a0e1a;
+  --color-surface-50: #111827;
+  --color-surface-100: #1a2235;
+  --color-surface-200: #232d42;
+  --color-surface-300: #2e3a52;
+
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* ── Base Styles ──────────────────────────────────────────── */
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--color-surface-0);
+  color: #e2e8f0;
+  min-height: 100dvh;
+}
+
+/* ── Utility: Glassmorphism ───────────────────────────────── */
+.glass {
+  background: rgba(17, 24, 39, 0.6);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-light {
+  background: rgba(26, 34, 53, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Animated gradient background ─────────────────────────── */
+.bg-mesh {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(51, 129, 255, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(34, 197, 94, 0.06) 0%, transparent 50%),
+    var(--color-surface-0);
+}
