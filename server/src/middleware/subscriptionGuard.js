@@ -1,51 +1,35 @@
-import supabase from '../supabaseClient.js';
+import { supabase } from '../config/supabaseClient.js';
 
 /**
- * SubscriptionGuard middleware.
- * Checks that the authenticated user has an active (or still-valid cancelled) subscription.
- * Returns 403 if subscription is lapsed, expired, or non-existent.
- *
- * Must be used AFTER verifyToken middleware.
+ * Requires an active subscription that has not passed subscription_expiry.
  */
 const subscriptionGuard = async (req, res, next) => {
   try {
-    const { data: user, error } = await supabase
-      .from('User')
-      .select('*')
-      .eq('id', req.user.userId)
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('subscription_status, subscription_expiry')
+      .eq('id', req.user.id)
       .maybeSingle();
 
     if (error) throw error;
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found.',
-      });
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
-    const status = user.subscriptionStatus;
-    const expiry = user.subscriptionExpiry;
-    const now = new Date();
-
-    // Active or trialing — full access
-    if (status === 'active' || status === 'trialing') {
-      return next();
+    const status = profile.subscription_status;
+    const activeLike = status === 'active' || status === 'trialing';
+    if (!activeLike) {
+      return res.status(403).json({ success: false, message: 'Active subscription required' });
     }
 
-    // Cancelled but still within paid period
-    if (status === 'cancelled' && expiry && new Date(expiry) > now) {
-      return next();
+    if (profile.subscription_expiry && new Date() > new Date(profile.subscription_expiry)) {
+      await supabase.from('profiles').update({ subscription_status: 'lapsed' }).eq('id', req.user.id);
+      return res.status(403).json({ success: false, message: 'Subscription expired' });
     }
 
-    // Everything else — no access
-    return res.status(403).json({
-      success: false,
-      message: 'Active subscription required. Please subscribe or renew.',
-      subscriptionStatus: status,
-    });
-  } catch (error) {
-    next(error);
+    next();
+  } catch (err) {
+    next(err);
   }
 };
 

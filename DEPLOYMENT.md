@@ -10,19 +10,27 @@ We recommend **Vercel** for the Frontend (Client) and **Railway** or **Render** 
 |---|---|
 | `PORT` | 5000 (Set by hosting provider usually) |
 | `CLIENT_URL` | e.g. `https://digitalheroes.com` (Used for CORS and redirecting emails) |
-| `MONGO_URI` | Production MongoDB Atlas connection string |
+| `SUPABASE_URL` | Your Supabase project URL |
+| `SUPABASE_ANON_KEY` | Your Supabase Anon/Publishable Key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase Service Role Secret Key |
 | `JWT_SECRET` | 64+ char random string |
 | `STRIPE_SECRET_KEY` | Stripe Live Secret Key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe Live Webhook Secret |
+| `STRIPE_MONTHLY_PRICE_ID` | Stripe Price ID (starts with `price_`) |
+| `STRIPE_YEARLY_PRICE_ID` | Stripe Price ID (starts with `price_`) |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary Name |
 | `CLOUDINARY_API_KEY` | Cloudinary Key |
 | `CLOUDINARY_API_SECRET` | Cloudinary Secret |
 | `RESEND_API_KEY` | Resend production API key for emails |
+| `ADMIN_EMAIL` | The designated admin email address |
 
 ### Client Variables
 | Variable | Description |
 |---|---|
 | `VITE_API_URL` | Production server URL (e.g. `https://api.digitalheroes.com`) |
+| `VITE_SUPABASE_URL` | Your Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Your Supabase Anon/Publishable Key |
+| `VITE_STRIPE_PUBLIC_KEY` | Your Stripe Publishable Key |
 
 ## 2. Server Deployment (Railway/Render)
 
@@ -32,9 +40,6 @@ We recommend **Vercel** for the Frontend (Client) and **Railway** or **Render** 
 3. Under the Service Settings, configure the **Start Command** to: `npm start`
 4. Enter all Server Environment variables listed above in the "Variables" tab.
 5. Railway will provision a public URL. Update `VITE_API_URL` under your Client deployment to use this.
-
-### MongoDB Atlas Setup
-- Ensure your cluster's "Network Access" IP Whitelist is updated to allow connections from your server. For maximum security, explicitly whitelist the static IP of your Railway/Render instance. If not possible, you may allow `0.0.0.0/0` (Anywhere) but rely on a strong `MONGO_URI` credential.
 
 ## 3. Client Deployment (Vercel)
 

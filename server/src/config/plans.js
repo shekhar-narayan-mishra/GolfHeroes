@@ -1,41 +1,21 @@
-/**
- * Subscription plan constants.
- * Replace the price IDs with your actual Stripe Price IDs from the dashboard.
- */
-
 export const PLANS = {
   monthly: {
-    id: 'monthly',
+    priceId: process.env.STRIPE_MONTHLY_PRICE_ID || process.env.STRIPE_PRICE_MONTHLY,
     name: 'Monthly',
-    priceId: process.env.STRIPE_PRICE_MONTHLY || 'price_monthly_id',
-    amount: 999,      // £9.99 in pence
-    currency: 'gbp',
     interval: 'month',
-    features: [
-      'Stableford score tracking',
-      'Monthly prize draw entry',
-      'Charity contribution',
-      'Full dashboard access',
-    ],
   },
-  annual: {
-    id: 'annual',
-    name: 'Annual',
-    priceId: process.env.STRIPE_PRICE_ANNUAL || 'price_annual_id',
-    amount: 8999,     // £89.99 in pence  (save ~25%)
-    currency: 'gbp',
+  yearly: {
+    priceId: process.env.STRIPE_YEARLY_PRICE_ID || process.env.STRIPE_PRICE_ANNUAL,
+    name: 'Yearly',
     interval: 'year',
-    features: [
-      'Everything in Monthly',
-      'Save 25% vs monthly',
-      'Priority draw entry',
-      'Exclusive annual events',
-    ],
+  },
+  /** Back-compat with older client sending `annual` */
+  annual: {
+    priceId: process.env.STRIPE_YEARLY_PRICE_ID || process.env.STRIPE_PRICE_ANNUAL,
+    name: 'Yearly',
+    interval: 'year',
   },
 };
 
-/**
- * Look up a plan by its Stripe Price ID.
- */
 export const getPlanByPriceId = (priceId) =>
-  Object.values(PLANS).find((p) => p.priceId === priceId) || null;
+  Object.values(PLANS).find((p) => p.priceId && p.priceId === priceId) || null;

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import SubscriptionBanner from '../components/SubscriptionBanner';
@@ -5,6 +6,7 @@ import SubscriptionBanner from '../components/SubscriptionBanner';
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -22,9 +24,17 @@ export default function DashboardLayout() {
   return (
     <div className="min-h-screen bg-mesh flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <header className="md:hidden border-b border-white/6 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
+      <header className="md:hidden border-b border-white/6 px-4 py-4 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          className="p-2 rounded-lg text-white hover:bg-white/10 md:hidden"
+          aria-label="Open menu"
+          onClick={() => setSidebarOpen(true)}
+        >
+          ☰
+        </button>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shrink-0">
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
             </svg>
@@ -32,14 +42,27 @@ export default function DashboardLayout() {
         </div>
         <button
           onClick={handleLogout}
-          className="text-sm font-medium text-slate-400 hover:text-white"
+          className="text-sm font-medium text-slate-400 hover:text-white shrink-0"
         >
           Sign out
         </button>
       </header>
 
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 border-r border-white/6 flex-col">
+      {sidebarOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          aria-label="Close menu"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — slide-over on mobile */}
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-50 w-64 border-r border-white/6 flex-col bg-[#0b1220] md:bg-transparent flex transition-transform duration-200 md:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         <div className="px-6 py-6 border-b border-white/6">
           <div className="flex items-center gap-2 mb-8">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
@@ -67,6 +90,7 @@ export default function DashboardLayout() {
               key={item.name}
               to={item.path}
               end={item.end}
+              onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                   isActive
@@ -87,6 +111,7 @@ export default function DashboardLayout() {
               <p className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Admin</p>
               <NavLink
                 to="/admin/users"
+                onClick={() => setSidebarOpen(false)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-warning/10 hover:text-warning transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

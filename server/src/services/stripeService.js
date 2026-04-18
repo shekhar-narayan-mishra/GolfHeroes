@@ -2,7 +2,7 @@
 // Will wrap Stripe SDK calls: create customer, create subscription,
 // handle webhooks, process refunds, etc.
 
-import stripe from '../config/stripe.js';
+import { stripe } from '../config/stripe.js';
 
 export const createCustomer = async (email, name) => {
   return stripe.customers.create({ email, name });

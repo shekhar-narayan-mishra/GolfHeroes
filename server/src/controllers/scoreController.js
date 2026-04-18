@@ -1,12 +1,13 @@
 import * as scoreService from '../services/scoreService.js';
+import { scoreToClient } from '../utils/scoreMapper.js';
 
 /**
  * GET /api/scores — get current user's scores (newest first)
  */
 export const getMyScores = async (req, res, next) => {
   try {
-    const scores = await scoreService.getUserScores(req.user.userId);
-    res.json({ success: true, scores });
+    const scores = await scoreService.getUserScores(req.user.id);
+    res.json({ success: true, scores: scores.map(scoreToClient) });
   } catch (error) {
     next(error);
   }
@@ -30,8 +31,8 @@ export const createScore = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Score must be a whole number between 1 and 45.' });
     }
 
-    const score = await scoreService.addScore(req.user.userId, Number(value), date);
-    res.status(201).json({ success: true, score });
+    const score = await scoreService.addScore(req.user.id, Number(value), date);
+    res.status(201).json({ success: true, score: scoreToClient(score) });
   } catch (error) {
     next(error);
   }
@@ -51,11 +52,11 @@ export const updateScore = async (req, res, next) => {
 
     const score = await scoreService.editScore(
       req.params.id,
-      req.user.userId,
+      req.user.id,
       value !== undefined ? Number(value) : undefined,
       date
     );
-    res.json({ success: true, score });
+    res.json({ success: true, score: scoreToClient(score) });
   } catch (error) {
     next(error);
   }
@@ -66,7 +67,7 @@ export const updateScore = async (req, res, next) => {
  */
 export const deleteScore = async (req, res, next) => {
   try {
-    await scoreService.deleteScore(req.params.id, req.user.userId);
+    await scoreService.deleteScore(req.params.id, req.user.id);
     res.json({ success: true, message: 'Score deleted.' });
   } catch (error) {
     next(error);

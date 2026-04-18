@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   getCharities,
   getCharityBySlug,
@@ -14,16 +15,16 @@ import isAdmin from '../middleware/isAdmin.js';
 const router = Router();
 
 // Public routes
-router.get('/', getCharities);
-router.get('/:slug', getCharityBySlug);
+router.get('/', asyncHandler(getCharities));
+router.get('/:slug', asyncHandler(getCharityBySlug));
 
 // Authenticated: charity selection
-router.post('/select', verifyToken, selectCharity);
+router.post('/select', verifyToken, asyncHandler(selectCharity));
 
 // Admin-only routes
-router.post('/', verifyToken, isAdmin, createCharity);
-router.put('/:id', verifyToken, isAdmin, updateCharity);
-router.delete('/:id', verifyToken, isAdmin, deleteCharity);
-router.post('/:id/image', verifyToken, isAdmin, addImage);
+router.post('/', verifyToken, isAdmin, asyncHandler(createCharity));
+router.put('/:id', verifyToken, isAdmin, asyncHandler(updateCharity));
+router.delete('/:id', verifyToken, isAdmin, asyncHandler(deleteCharity));
+router.post('/:id/image', verifyToken, isAdmin, asyncHandler(addImage));
 
 export default router;

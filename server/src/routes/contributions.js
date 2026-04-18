@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   createIndependentDonation,
   getMyContributions,
@@ -11,8 +12,8 @@ const router = Router();
 
 router.use(verifyToken);
 
-router.post('/independent', createIndependentDonation);
-router.get('/my', getMyContributions);
-router.get('/totals', isAdmin, getContributionTotals);
+router.post('/independent', asyncHandler(createIndependentDonation));
+router.get('/my', asyncHandler(getMyContributions));
+router.get('/totals', isAdmin, asyncHandler(getContributionTotals));
 
 export default router;

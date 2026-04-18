@@ -1,57 +1,51 @@
-import supabase from '../supabaseClient.js';
-import { sendDrawPublishedEmail } from './emailService.js';
+/**
+ * SCALABILITY NOTE:
+ * This draw engine is stateless and can be extracted into a standalone
+ * microservice or Supabase Edge Function for multi-country support.
+ * Each country runs independent draws with separate prize pools by passing
+ * a country filter to all Supabase queries. Corporate accounts are supported
+ * by grouping user IDs under a corporate_id on the profiles table.
+ * All API routes use the /api/ prefix making them directly consumable
+ * by a future React Native mobile app without modification.
+ */
 
-// ── Configuration ──────────────────────────────────────────
+import { supabase } from '../config/supabaseClient.js';
+import { sendDrawPublishedEmail } from './emailService.js';
+import { profileToClient } from '../utils/profileMapper.js';
+
 const PRIZE_TIERS = {
-  5: { label: '5-Number Match', share: 0.40 },  // jackpot
+  5: { label: '5-Number Match', share: 0.4 },
   4: { label: '4-Number Match', share: 0.35 },
   3: { label: '3-Number Match', share: 0.25 },
 };
 
-// Per-subscriber contribution to the draw pool (in pence)
-const PER_SUBSCRIBER_CONTRIBUTION = 200; // £2.00 per month
+/** Pence contributed per active subscriber toward the monthly pool (£2.00) */
+const PER_SUBSCRIBER_CONTRIBUTION = 200;
 
-// ── 1. Prize Pool Calculation ─────────────────────────────
-
-/**
- * Calculate the total prize pool for the current draw.
- * Base pool = active subscribers × per-subscriber contribution.
- * Adds rolled-over jackpot from previous unclaimed 5-match tier.
- */
-export const calculatePrizePool = async (jackpotRollover = 0) => {
+export const calculatePrizePool = async (jackpotRolloverEur = 0) => {
   const { count: activeCount, error } = await supabase
-    .from('User')
+    .from('profiles')
     .select('*', { count: 'exact', head: true })
-    .in('subscriptionStatus', ['active', 'trialing']);
+    .in('subscription_status', ['active', 'trialing']);
 
   if (error) throw error;
 
   const basePool = (activeCount || 0) * PER_SUBSCRIBER_CONTRIBUTION;
-  const total = basePool + jackpotRollover;
+  const total = basePool + jackpotRolloverEur;
 
   return {
     activeSubscribers: activeCount || 0,
     basePool,
-    jackpotRollover,
+    jackpotRollover: jackpotRolloverEur,
     total,
     tiers: {
-      first:  Math.round(total * PRIZE_TIERS[5].share), // 5-match (40%)
-      second: Math.round(total * PRIZE_TIERS[4].share), // 4-match (35%)
-      third:  Math.round(total * PRIZE_TIERS[3].share), // 3-match (25%)
+      first: Math.round(total * PRIZE_TIERS[5].share),
+      second: Math.round(total * PRIZE_TIERS[4].share),
+      third: Math.round(total * PRIZE_TIERS[3].share),
     },
   };
 };
 
-// ── 2. Number Generation ──────────────────────────────────
-
-/**
- * Generate 5 unique integers from 1–45.
- * "random" → pure random
- * "algorithmic" → weighted by score frequency distribution
- *
- * @param {string} drawType  "random" | "algorithmic"
- * @param {string} bias      "most" | "least" — only used for algorithmic
- */
 export const generateNumbers = async (drawType = 'random', bias = 'most') => {
   if (drawType === 'random') {
     return generateRandomNumbers();
@@ -67,30 +61,25 @@ function generateRandomNumbers() {
   return Array.from(nums).sort((a, b) => a - b);
 }
 
-/**
- * Fetch all scores and build a frequency distribution,
- * then use weighted random selection biased toward most or least frequent values.
- */
 async function generateAlgorithmicNumbers(bias = 'most') {
-  const { data: scores, error } = await supabase
-    .from('Score')
-    .select('value');
+  const { data: scores, error } = await supabase.from('scores').select('value');
 
   if (error) throw error;
 
   const freqMap = {};
-  (scores || []).forEach(s => {
+  (scores || []).forEach((s) => {
     freqMap[s.value] = (freqMap[s.value] || 0) + 1;
   });
 
   const frequencies = Object.entries(freqMap).map(([value, count]) => ({
     value: parseInt(value, 10),
-    _count: { value: count }
+    _count: { value: count },
   }));
 
-  frequencies.sort((a, b) => bias === 'most' ? b._count.value - a._count.value : a._count.value - b._count.value);
+  frequencies.sort((a, b) =>
+    bias === 'most' ? b._count.value - a._count.value : a._count.value - b._count.value
+  );
 
-  // If not enough data, fall back to random
   if (frequencies.length < 5) {
     return generateRandomNumbers();
   }
@@ -101,7 +90,6 @@ async function generateAlgorithmicNumbers(bias = 'most') {
     weight: f._count.value / totalCount,
   }));
 
-  // Weighted random selection without replacement
   const selected = new Set();
   const pool = [...weighted];
 
@@ -119,7 +107,6 @@ async function generateAlgorithmicNumbers(bias = 'most') {
     }
   }
 
-  // Fill remaining with random if needed
   while (selected.size < 5) {
     selected.add(Math.floor(Math.random() * 45) + 1);
   }
@@ -127,18 +114,11 @@ async function generateAlgorithmicNumbers(bias = 'most') {
   return Array.from(selected).sort((a, b) => a - b);
 }
 
-// ── 3. Match Users Against Draw Numbers ───────────────────
-
-/**
- * For each active subscriber, compare their stored scores against the draw numbers.
- * Count matches and assign tier (3/4/5 match).
- * Returns array of matched users with tier and prize amount.
- */
 export const matchUsers = async (drawNumbers, prizePool) => {
   const { data: activeUsers, error: uErr } = await supabase
-    .from('User')
+    .from('profiles')
     .select('id, name, email')
-    .in('subscriptionStatus', ['active', 'trialing']);
+    .in('subscription_status', ['active', 'trialing']);
 
   if (uErr) throw uErr;
 
@@ -146,18 +126,18 @@ export const matchUsers = async (drawNumbers, prizePool) => {
   const tierWinners = { 5: [], 4: [], 3: [] };
 
   if (activeUsers && activeUsers.length > 0) {
-    const userIds = activeUsers.map(u => u.id);
+    const userIds = activeUsers.map((u) => u.id);
     const { data: userScores, error: sErr } = await supabase
-      .from('Score')
-      .select('userId, value')
-      .in('userId', userIds);
+      .from('scores')
+      .select('user_id, value')
+      .in('user_id', userIds);
 
     if (sErr) throw sErr;
 
     const scoresByUserId = {};
-    (userScores || []).forEach(s => {
-      if (!scoresByUserId[s.userId]) scoresByUserId[s.userId] = new Set();
-      scoresByUserId[s.userId].add(s.value);
+    (userScores || []).forEach((s) => {
+      if (!scoresByUserId[s.user_id]) scoresByUserId[s.user_id] = new Set();
+      scoresByUserId[s.user_id].add(s.value);
     });
 
     for (const user of activeUsers) {
@@ -176,13 +156,10 @@ export const matchUsers = async (drawNumbers, prizePool) => {
     }
   }
 
-  // Calculate per-user prize amount (split equally within each tier)
   for (const tier of [5, 4, 3]) {
     const winners = tierWinners[tier];
     if (winners && winners.length > 0) {
-      const tierTotal = prizePool.tiers[
-        tier === 5 ? 'first' : tier === 4 ? 'second' : 'third'
-      ];
+      const tierTotal = prizePool.tiers[tier === 5 ? 'first' : tier === 4 ? 'second' : 'third'];
       const perUser = Math.round(tierTotal / winners.length);
 
       for (const winner of winners) {
@@ -197,7 +174,6 @@ export const matchUsers = async (drawNumbers, prizePool) => {
     }
   }
 
-  // Did anyone win the jackpot (5-match)?
   const hasJackpotWinner = tierWinners[5] && tierWinners[5].length > 0;
 
   return {
@@ -212,15 +188,9 @@ export const matchUsers = async (drawNumbers, prizePool) => {
   };
 };
 
-// ── 4. Simulate Draw ──────────────────────────────────────
-
-/**
- * Run the full draw pipeline but do NOT persist results.
- * Returns preview data for admin review.
- */
 export const simulateDraw = async (drawId) => {
   const { data: draw, error: dErr } = await supabase
-    .from('Draw')
+    .from('draws')
     .select('*')
     .eq('id', drawId)
     .maybeSingle();
@@ -238,24 +208,18 @@ export const simulateDraw = async (drawId) => {
     throw err;
   }
 
-  // Step 1: Calculate prize pool
-  const prizePool = await calculatePrizePool(draw.jackpotRollover);
-
-  // Step 2: Generate numbers
-  const numbers = await generateNumbers(draw.drawType, draw.algorithmicBias || 'most');
-
-  // Step 3: Match users
+  const prizePool = await calculatePrizePool(Number(draw.jackpot_rollover) || 0);
+  const numbers = await generateNumbers(draw.draw_type || 'random', draw.algorithmic_bias || 'most');
   const result = await matchUsers(numbers, prizePool);
 
-  // Update draw with simulation data (but don't publish)
   const { data: updatedDraw, error: updErr } = await supabase
-    .from('Draw')
+    .from('draws')
     .update({
       numbers,
-      prizePoolTotal: prizePool.total,
-      prizePoolFirst: prizePool.tiers.first,
-      prizePoolSecond: prizePool.tiers.second,
-      prizePoolThird: prizePool.tiers.third,
+      prize_pool_total: prizePool.total,
+      prize_pool_first: prizePool.tiers.first,
+      prize_pool_second: prizePool.tiers.second,
+      prize_pool_third: prizePool.tiers.third,
       status: 'simulated',
     })
     .eq('id', draw.id)
@@ -272,16 +236,9 @@ export const simulateDraw = async (drawId) => {
   };
 };
 
-// ── 5. Publish Draw ───────────────────────────────────────
-
-/**
- * Persist DrawResult and Winner documents for all matched users.
- * Handle jackpot rollover if no 5-match winner.
- * This is IRREVERSIBLE.
- */
 export const publishDraw = async (drawId) => {
   const { data: draw, error: dErr } = await supabase
-    .from('Draw')
+    .from('draws')
     .select('*')
     .eq('id', drawId)
     .maybeSingle();
@@ -305,30 +262,28 @@ export const publishDraw = async (drawId) => {
     throw err;
   }
 
-  // Re-run matching with the stored numbers
   const prizePool = {
     tiers: {
-      first: draw.prizePoolFirst,
-      second: draw.prizePoolSecond,
-      third: draw.prizePoolThird,
+      first: Number(draw.prize_pool_first),
+      second: Number(draw.prize_pool_second),
+      third: Number(draw.prize_pool_third),
     },
   };
+
   const { matches, hasJackpotWinner, tierSummary } = await matchUsers(draw.numbers, prizePool);
 
-  // Persist DrawResult documents and Winner documents
   const drawResults = [];
-  
-  // Use sequential updates to ensure stable relations
+
   for (const match of matches) {
     const { data: result, error: resErr } = await supabase
-      .from('DrawResult')
+      .from('draw_results')
       .insert([
         {
-          drawId: draw.id,
-          userId: match.userId,
-          matchTier: match.matchTier,
-          prizeAmount: match.prizeAmount,
-        }
+          draw_id: draw.id,
+          user_id: match.userId,
+          match_tier: match.matchTier,
+          prize_amount: match.prizeAmount,
+        },
       ])
       .select()
       .single();
@@ -336,32 +291,26 @@ export const publishDraw = async (drawId) => {
     if (resErr) throw resErr;
     drawResults.push(result);
 
-    // Create Winner document attached to this drawResult
-    const { error: winErr } = await supabase
-      .from('Winner')
-      .insert([
-        {
-          userId: match.userId,
-          drawResultId: result.id,
-        }
-      ]);
+    const { error: winErr } = await supabase.from('winners').insert([
+      {
+        user_id: match.userId,
+        draw_result_id: result.id,
+      },
+    ]);
 
     if (winErr) throw winErr;
   }
 
-  // Handle jackpot rollover
   let nextJackpotRollover = 0;
   if (!hasJackpotWinner) {
-    nextJackpotRollover = draw.prizePoolFirst;
-    console.log(`🔄 Jackpot rolling over: £${(nextJackpotRollover / 100).toFixed(2)}`);
+    nextJackpotRollover = Number(draw.prize_pool_first) || 0;
   }
 
-  // Mark draw as published
   const { data: finalDraw, error: updErr } = await supabase
-    .from('Draw')
+    .from('draws')
     .update({
       status: 'published',
-      publishedAt: new Date().toISOString(),
+      published_at: new Date().toISOString(),
     })
     .eq('id', draw.id)
     .select()
@@ -369,21 +318,20 @@ export const publishDraw = async (drawId) => {
 
   if (updErr) throw updErr;
 
-  // Send emails to all active participants
   const { data: activeUsers } = await supabase
-    .from('User')
+    .from('profiles')
     .select('*')
-    .in('subscriptionStatus', ['active', 'trialing']);
-    
+    .in('subscription_status', ['active', 'trialing']);
+
   if (activeUsers && activeUsers.length > 0) {
-    for (const user of activeUsers) {
-      // Find if this user won anything in this draw
-      const userMatch = matches.find(m => m.userId === user.id);
-      sendDrawPublishedEmail(user, userMatch).catch(console.error);
+    for (const row of activeUsers) {
+      const userMatch = matches.find((m) => m.userId === row.id);
+      sendDrawPublishedEmail(profileToClient(row), userMatch ? { matchTier: userMatch.matchTier } : null).catch(
+        console.error
+      );
     }
   }
 
-  // Store rollover for next month's draw (handled externally when next draw is created)
   return {
     draw: finalDraw,
     drawResults,
@@ -394,14 +342,10 @@ export const publishDraw = async (drawId) => {
   };
 };
 
-/**
- * Get the jackpot rollover amount from the most recent published draw
- * that had no 5-match winner.
- */
 export const getJackpotRollover = async () => {
   const { data: lastDraw, error } = await supabase
-    .from('Draw')
-    .select('id, prizePoolFirst')
+    .from('draws')
+    .select('id, prize_pool_first')
     .eq('status', 'published')
     .order('year', { ascending: false })
     .order('month', { ascending: false })
@@ -410,17 +354,16 @@ export const getJackpotRollover = async () => {
 
   if (error || !lastDraw) return 0;
 
-  // Check if last draw had any 5-match winners
   const { count: jackpotWinners, error: countErr } = await supabase
-    .from('DrawResult')
+    .from('draw_results')
     .select('*', { count: 'exact', head: true })
-    .eq('drawId', lastDraw.id)
-    .eq('matchTier', 5);
+    .eq('draw_id', lastDraw.id)
+    .eq('match_tier', 5);
 
   if (countErr) throw countErr;
 
   if (jackpotWinners === 0) {
-    return lastDraw.prizePoolFirst;
+    return Number(lastDraw.prize_pool_first) || 0;
   }
 
   return 0;

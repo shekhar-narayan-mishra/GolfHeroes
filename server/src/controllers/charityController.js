@@ -1,4 +1,4 @@
-import supabase from '../supabaseClient.js';
+import { supabase } from '../config/supabaseClient.js';
 
 const MIN_CONTRIBUTION_PCT = 10;
 
@@ -10,7 +10,7 @@ export const getCharities = async (req, res, next) => {
   try {
     const { search, featured } = req.query;
     
-    let query = supabase.from('Charity').select('*').order('featured', { ascending: false }).order('name', { ascending: true });
+    let query = supabase.from('charities').select('*').order('featured', { ascending: false }).order('name', { ascending: true });
 
     if (search) {
       query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
@@ -36,7 +36,7 @@ export const getCharities = async (req, res, next) => {
 export const getCharityBySlug = async (req, res, next) => {
   try {
     const { data: charity, error } = await supabase
-      .from('Charity')
+      .from('charities')
       .select('*')
       .eq('slug', req.params.slug)
       .maybeSingle();
@@ -67,7 +67,7 @@ export const createCharity = async (req, res, next) => {
     const parsedSlug = slug.toLowerCase().replace(/\s+/g, '-');
     
     const { data: existing } = await supabase
-      .from('Charity')
+      .from('charities')
       .select('*')
       .eq('slug', parsedSlug)
       .maybeSingle();
@@ -77,7 +77,7 @@ export const createCharity = async (req, res, next) => {
     }
 
     const { data: charity, error } = await supabase
-      .from('Charity')
+      .from('charities')
       .insert([
         {
           name,
@@ -108,7 +108,7 @@ export const updateCharity = async (req, res, next) => {
     
     // Check if charity exists
     const { data: existing, error: findErr } = await supabase
-      .from('Charity')
+      .from('charities')
       .select('*')
       .eq('id', req.params.id)
       .maybeSingle();
@@ -119,7 +119,7 @@ export const updateCharity = async (req, res, next) => {
     }
 
     const { data: charity, error } = await supabase
-      .from('Charity')
+      .from('charities')
       .update(updateData)
       .eq('id', req.params.id)
       .select()
@@ -139,7 +139,7 @@ export const updateCharity = async (req, res, next) => {
 export const deleteCharity = async (req, res, next) => {
   try {
     const { data: existing, error: findErr } = await supabase
-      .from('Charity')
+      .from('charities')
       .select('*')
       .eq('id', req.params.id)
       .maybeSingle();
@@ -150,7 +150,7 @@ export const deleteCharity = async (req, res, next) => {
     }
 
     const { error } = await supabase
-      .from('Charity')
+      .from('charities')
       .delete()
       .eq('id', req.params.id);
 
@@ -174,7 +174,7 @@ export const addImage = async (req, res, next) => {
     }
 
     const { data: existing, error: findErr } = await supabase
-      .from('Charity')
+      .from('charities')
       .select('*')
       .eq('id', req.params.id)
       .maybeSingle();
@@ -187,7 +187,7 @@ export const addImage = async (req, res, next) => {
     const newImages = [...(existing.images || []), url];
 
     const { data: charity, error } = await supabase
-      .from('Charity')
+      .from('charities')
       .update({ images: newImages })
       .eq('id', req.params.id)
       .select()
@@ -223,7 +223,7 @@ export const selectCharity = async (req, res, next) => {
 
     // Verify charity exists
     const { data: charity, error: cErr } = await supabase
-      .from('Charity')
+      .from('charities')
       .select('id, name, slug')
       .eq('id', charityId)
       .maybeSingle();
@@ -234,12 +234,12 @@ export const selectCharity = async (req, res, next) => {
     }
 
     const { data: user, error: uErr } = await supabase
-      .from('User')
+      .from('profiles')
       .update({
-        charityId,
-        contributionPercent: pct,
+        charity_id: charityId,
+        contribution_percent: pct,
       })
-      .eq('id', req.user.userId)
+      .eq('id', req.user.id)
       .select()
       .single();
 
@@ -248,7 +248,7 @@ export const selectCharity = async (req, res, next) => {
     res.json({
       success: true,
       charity: { id: charity.id, name: charity.name, slug: charity.slug },
-      contributionPercent: user.contributionPercent,
+      contributionPercent: user.contribution_percent,
     });
   } catch (error) {
     next(error);

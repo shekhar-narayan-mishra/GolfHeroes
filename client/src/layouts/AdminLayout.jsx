@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -34,17 +36,37 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-mesh flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <header className="md:hidden border-b border-warning/20 bg-warning/5 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
+      <header className="md:hidden border-b border-warning/20 bg-warning/5 px-4 py-4 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          className="p-2 rounded-lg text-white hover:bg-white/10"
+          aria-label="Open menu"
+          onClick={() => setSidebarOpen(true)}
+        >
+          ☰
+        </button>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
             <span className="font-bold text-xs text-warning">A</span>
           </div>
-          <span className="font-bold text-white tracking-wide">Admin Portal</span>
+          <span className="font-bold text-white tracking-wide truncate">Admin Portal</span>
         </div>
       </header>
 
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 border-r border-white/6 flex-col bg-slate-900/50 backdrop-blur-xl">
+      {sidebarOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          aria-label="Close menu"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-50 w-64 border-r border-white/6 flex-col bg-slate-900/95 backdrop-blur-xl flex transition-transform duration-200 md:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         <div className="px-6 py-6 border-b border-white/6">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2">
@@ -65,6 +87,7 @@ export default function AdminLayout() {
               key={item.name}
               to={item.path}
               end={item.end}
+              onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                   isActive
@@ -83,6 +106,7 @@ export default function AdminLayout() {
           <div className="mt-8 pt-8 border-t border-white/6">
             <NavLink
               to="/dashboard"
+              onClick={() => setSidebarOpen(false)}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white transition-colors"
             >
               <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -121,6 +145,7 @@ export default function AdminLayout() {
               key={item.name}
               to={item.path}
               end={item.end}
+              onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 `flex flex-col items-center gap-1 p-2 rounded-xl text-[10px] font-medium transition-colors ${
                   isActive

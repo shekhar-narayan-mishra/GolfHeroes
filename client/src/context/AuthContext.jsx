@@ -11,7 +11,9 @@ export const useAuth = () => {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => localStorage.getItem('dh_token'));
+  const [token, setToken] = useState(
+    () => localStorage.getItem('token') || localStorage.getItem('dh_token')
+  );
   const [loading, setLoading] = useState(true);
 
   // Rehydrate session on app load
@@ -26,6 +28,7 @@ export function AuthProvider({ children }) {
         setUser(data.user);
       } catch {
         // Token invalid / expired — clear it
+        localStorage.removeItem('token');
         localStorage.removeItem('dh_token');
         setToken(null);
         setUser(null);
@@ -38,7 +41,8 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const { data } = await api.post('/api/auth/login', { email, password });
-    localStorage.setItem('dh_token', data.token);
+    localStorage.setItem('token', data.token);
+    localStorage.removeItem('dh_token');
     setToken(data.token);
     setUser(data.user);
     return data;
@@ -49,13 +53,15 @@ export function AuthProvider({ children }) {
     if (data.needsConfirmation) {
       return data;
     }
-    localStorage.setItem('dh_token', data.token);
+    localStorage.setItem('token', data.token);
+    localStorage.removeItem('dh_token');
     setToken(data.token);
     setUser(data.user);
     return data;
   }, []);
 
   const logout = useCallback(() => {
+    localStorage.removeItem('token');
     localStorage.removeItem('dh_token');
     setToken(null);
     setUser(null);

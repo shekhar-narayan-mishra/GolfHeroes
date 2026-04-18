@@ -1,32 +1,20 @@
-import supabase from '../supabaseClient.js';
+import { supabase } from '../config/supabaseClient.js';
 
 const MAX_SCORES = 5;
 
-/**
- * Normalise a date to midnight UTC (strips time component).
- */
 export const normaliseDate = (dateInput) => {
   const d = new Date(dateInput);
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())).toISOString();
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())).toISOString().slice(0, 10);
 };
 
-/**
- * Add a new score for a user.
- * Business rules:
- *  - Normalise date to midnight UTC
- *  - Reject if a score already exists for that date (409)
- *  - If user already has 5 scores, delete the oldest before inserting
- *  - Value must be 1–45
- */
 export const addScore = async (userId, value, date) => {
-  const normDate = normaliseDate(date);
+  const scoreDate = normaliseDate(date);
 
-  // Check for duplicate date
   const { data: existing, error: dupErr } = await supabase
-    .from('Score')
+    .from('scores')
     .select('id')
-    .eq('userId', userId)
-    .eq('date', normDate)
+    .eq('user_id', userId)
+    .eq('score_date', scoreDate)
     .maybeSingle();
 
   if (dupErr) throw dupErr;
@@ -37,38 +25,36 @@ export const addScore = async (userId, value, date) => {
     throw err;
   }
 
-  // Enforce max 5 scores — delete oldest if at limit
   const { count, error: countErr } = await supabase
-    .from('Score')
+    .from('scores')
     .select('*', { count: 'exact', head: true })
-    .eq('userId', userId);
+    .eq('user_id', userId);
 
   if (countErr) throw countErr;
 
   if (count >= MAX_SCORES) {
     const { data: oldestScores, error: oldErr } = await supabase
-      .from('Score')
+      .from('scores')
       .select('id')
-      .eq('userId', userId)
-      .order('date', { ascending: true })
+      .eq('user_id', userId)
+      .order('score_date', { ascending: true })
       .limit(1);
 
     if (oldErr) throw oldErr;
-    
+
     if (oldestScores && oldestScores.length > 0) {
-      await supabase.from('Score').delete().eq('id', oldestScores[0].id);
+      await supabase.from('scores').delete().eq('id', oldestScores[0].id);
     }
   }
 
-  // Insert new score
   const { data: score, error: insErr } = await supabase
-    .from('Score')
+    .from('scores')
     .insert([
       {
-        userId,
+        user_id: userId,
         value,
-        date: normDate,
-      }
+        score_date: scoreDate,
+      },
     ])
     .select()
     .single();
@@ -77,13 +63,9 @@ export const addScore = async (userId, value, date) => {
   return score;
 };
 
-/**
- * Edit an existing score.
- * Checks ownership and date conflicts.
- */
 export const editScore = async (scoreId, userId, value, date) => {
   const { data: score, error: findErr } = await supabase
-    .from('Score')
+    .from('scores')
     .select('*')
     .eq('id', scoreId)
     .maybeSingle();
@@ -96,7 +78,7 @@ export const editScore = async (scoreId, userId, value, date) => {
     throw err;
   }
 
-  if (score.userId !== userId) {
+  if (score.user_id !== userId) {
     const err = new Error('You can only edit your own scores.');
     err.statusCode = 403;
     throw err;
@@ -104,14 +86,13 @@ export const editScore = async (scoreId, userId, value, date) => {
 
   const updateData = {};
 
-  // If date is changing, check for conflict
   if (date !== undefined) {
-    const normDate = normaliseDate(date);
+    const scoreDate = normaliseDate(date);
     const { data: conflict, error: confErr } = await supabase
-      .from('Score')
+      .from('scores')
       .select('id')
-      .eq('userId', userId)
-      .eq('date', normDate)
+      .eq('user_id', userId)
+      .eq('score_date', scoreDate)
       .neq('id', scoreId)
       .limit(1);
 
@@ -122,7 +103,7 @@ export const editScore = async (scoreId, userId, value, date) => {
       err.statusCode = 409;
       throw err;
     }
-    updateData.date = normDate;
+    updateData.score_date = scoreDate;
   }
 
   if (value !== undefined) {
@@ -131,7 +112,7 @@ export const editScore = async (scoreId, userId, value, date) => {
 
   if (Object.keys(updateData).length > 0) {
     const { data: updatedScore, error: updErr } = await supabase
-      .from('Score')
+      .from('scores')
       .update(updateData)
       .eq('id', scoreId)
       .select()
@@ -144,12 +125,9 @@ export const editScore = async (scoreId, userId, value, date) => {
   return score;
 };
 
-/**
- * Delete a score. Checks ownership.
- */
 export const deleteScore = async (scoreId, userId) => {
   const { data: score, error: findErr } = await supabase
-    .from('Score')
+    .from('scores')
     .select('*')
     .eq('id', scoreId)
     .maybeSingle();
@@ -162,31 +140,25 @@ export const deleteScore = async (scoreId, userId) => {
     throw err;
   }
 
-  if (score.userId !== userId) {
+  if (score.user_id !== userId) {
     const err = new Error('You can only delete your own scores.');
     err.statusCode = 403;
     throw err;
   }
 
-  const { error: delErr } = await supabase
-    .from('Score')
-    .delete()
-    .eq('id', scoreId);
+  const { error: delErr } = await supabase.from('scores').delete().eq('id', scoreId);
 
   if (delErr) throw delErr;
 
   return score;
 };
 
-/**
- * Get all scores for a user, sorted newest first.
- */
 export const getUserScores = async (userId) => {
   const { data: scores, error } = await supabase
-    .from('Score')
+    .from('scores')
     .select('*')
-    .eq('userId', userId)
-    .order('date', { ascending: false });
+    .eq('user_id', userId)
+    .order('score_date', { ascending: false });
 
   if (error) throw error;
   return scores || [];

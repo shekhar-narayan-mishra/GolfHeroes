@@ -1,17 +1,14 @@
-import supabase from '../supabaseClient.js';
-import stripe from '../config/stripe.js';
-
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+import { supabase } from '../config/supabaseClient.js';
+import { stripe } from '../config/stripe.js';
 
 /**
  * POST /api/contributions/independent
- * Create a Stripe Payment Intent for a one-off donation.
- * Body: { charityId, amount } — amount in pence (min 100 = £1.00)
+ * Body: { charityId, amount } — amount in minor units (pence); stored as EUR decimal.
  */
 export const createIndependentDonation = async (req, res, next) => {
   try {
     const { charityId, amount } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     if (!charityId || !amount) {
       return res.status(400).json({
@@ -28,7 +25,7 @@ export const createIndependentDonation = async (req, res, next) => {
     }
 
     const { data: charity, error: cErr } = await supabase
-      .from('Charity')
+      .from('charities')
       .select('*')
       .eq('id', charityId)
       .maybeSingle();
@@ -38,38 +35,36 @@ export const createIndependentDonation = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Charity not found.' });
     }
 
-    const { data: user, error: uErr } = await supabase
-      .from('User')
+    const { data: profile, error: uErr } = await supabase
+      .from('profiles')
       .select('*')
       .eq('id', userId)
       .maybeSingle();
 
     if (uErr) throw uErr;
 
-    // Create Stripe Payment Intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: 'gbp',
       metadata: {
-        userId: userId,
-        charityId: charityId,
+        userId,
+        charityId,
         charityName: charity.name,
         type: 'independent',
       },
-      description: `Donation to ${charity.name} — Digital Heroes`,
-      receipt_email: user?.email,
+      description: `Donation to ${charity.name} — GolfHeroes`,
+      receipt_email: profile?.email,
     });
 
-    // Record in DB
     const { data: contribution, error } = await supabase
-      .from('CharityContribution')
+      .from('charity_contributions')
       .insert([
         {
-          userId,
-          charityId,
-          amount,
-          type: 'independent',
-        }
+          user_id: userId,
+          charity_id: charityId,
+          amount: Number(amount),
+          contribution_type: 'independent',
+        },
       ])
       .select()
       .single();
@@ -87,34 +82,31 @@ export const createIndependentDonation = async (req, res, next) => {
   }
 };
 
-/**
- * GET /api/contributions/my
- * Current user's contribution history.
- */
 export const getMyContributions = async (req, res, next) => {
   try {
-    // Relational query targeting foreign key relation
     const { data: contributions, error } = await supabase
-      .from('CharityContribution')
-      .select(`
-        *,
-        charity:Charity (
-          name,
-          slug
-        )
-      `)
-      .eq('userId', req.user.userId)
-      .order('date', { ascending: false });
+      .from('charity_contributions')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
-    const total = (contributions || []).reduce((sum, c) => sum + c.amount, 0);
+    const charityIds = [...new Set((contributions || []).map((c) => c.charity_id).filter(Boolean))];
+    let charityMap = {};
+    if (charityIds.length) {
+      const { data: ch, error: chErr } = await supabase.from('charities').select('id, name, slug').in('id', charityIds);
+      if (chErr) throw chErr;
+      (ch || []).forEach((c) => {
+        charityMap[c.id] = c;
+      });
+    }
 
-    // Format output mapping uppercase Charity mapping to match previous JSON response
-    const formattedData = (contributions || []).map(c => ({
+    const total = (contributions || []).reduce((sum, c) => sum + Number(c.amount || 0), 0);
+
+    const formattedData = (contributions || []).map((c) => ({
       ...c,
-      // Workaround for potential naming differences if Postgres maps table name natively vs explicit aliases
-      charity: c.charity || c.Charity || { name: 'Unknown', slug: '' }
+      charity: charityMap[c.charity_id] || { name: 'Unknown', slug: '' },
     }));
 
     res.json({ success: true, contributions: formattedData, total });
@@ -123,41 +115,38 @@ export const getMyContributions = async (req, res, next) => {
   }
 };
 
-/**
- * GET /api/contributions/totals
- * Admin: total contributions per charity.
- */
 export const getContributionTotals = async (req, res, next) => {
   try {
     const { data: contributions, error } = await supabase
-      .from('CharityContribution')
-      .select('amount, charityId');
+      .from('charity_contributions')
+      .select('amount, charity_id');
 
     if (error) throw error;
 
     const charityMap = {};
-    (contributions || []).forEach(c => {
-      if (!charityMap[c.charityId]) {
-        charityMap[c.charityId] = { amount: 0, count: 0 };
+    (contributions || []).forEach((c) => {
+      const cid = c.charity_id;
+      if (!charityMap[cid]) {
+        charityMap[cid] = { amount: 0, count: 0 };
       }
-      charityMap[c.charityId].amount += c.amount;
-      charityMap[c.charityId].count += 1;
+      charityMap[cid].amount += Number(c.amount || 0);
+      charityMap[cid].count += 1;
     });
 
     const cIds = Object.keys(charityMap);
     let charities = [];
     if (cIds.length > 0) {
       const { data: cData, error: cErr } = await supabase
-        .from('Charity')
+        .from('charities')
         .select('id, name, slug')
         .in('id', cIds);
       if (cErr) throw cErr;
       charities = cData || [];
     }
 
-    const totals = cIds.map(cId => {
+    const totals = cIds.map((cId) => {
       const agg = charityMap[cId];
-      const c = charities.find(ch => String(ch.id) === String(cId));
+      const c = charities.find((ch) => String(ch.id) === String(cId));
       return {
         charityId: cId,
         charityName: c ? c.name : 'Unknown',

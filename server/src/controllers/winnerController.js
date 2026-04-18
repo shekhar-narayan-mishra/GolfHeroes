@@ -1,68 +1,131 @@
-import supabase from '../supabaseClient.js';
+import { supabase } from '../config/supabaseClient.js';
 import cloudinary from '../config/cloudinary.js';
 import { sendVerificationApproved, sendPayoutConfirmed, sendEmail } from '../services/emailService.js';
 
-/**
- * GET /api/winners — admin: all winners with populated user + draw info
- */
+async function loadProfilesByIds(ids) {
+  if (!ids.length) return {};
+  const { data, error } = await supabase.from('profiles').select('id, name, email').in('id', ids);
+  if (error) throw error;
+  const map = {};
+  (data || []).forEach((p) => {
+    map[p.id] = p;
+  });
+  return map;
+}
+
 export const getWinners = async (req, res, next) => {
   try {
-    const { data: winners, error } = await supabase
-      .from('Winner')
-      .select(`
-        *,
-        user:User (name, email),
-        drawResult:DrawResult (
-          matchTier,
-          prizeAmount,
-          draw:Draw (month, year, numbers)
-        )
-      `)
-      .order('createdAt', { ascending: false });
+    const { data: winners, error } = await supabase.from('winners').select('*').order('created_at', { ascending: false });
 
     if (error) throw error;
 
-    res.json({ success: true, winners: winners || [] });
+    const userIds = [...new Set((winners || []).map((w) => w.user_id))];
+    const profilesMap = await loadProfilesByIds(userIds);
+
+    const drIds = [...new Set((winners || []).map((w) => w.draw_result_id).filter(Boolean))];
+    let drMap = {};
+    if (drIds.length) {
+      const { data: drs, error: drErr } = await supabase.from('draw_results').select('*').in('id', drIds);
+      if (drErr) throw drErr;
+      (drs || []).forEach((r) => {
+        drMap[r.id] = r;
+      });
+    }
+
+    const drawIds = [...new Set(Object.values(drMap).map((r) => r.draw_id).filter(Boolean))];
+    let drawMap = {};
+    if (drawIds.length) {
+      const { data: draws, error: dErr } = await supabase.from('draws').select('*').in('id', drawIds);
+      if (dErr) throw dErr;
+      (draws || []).forEach((d) => {
+        drawMap[d.id] = d;
+      });
+    }
+
+    const enriched = (winners || []).map((w) => {
+      const dr = drMap[w.draw_result_id];
+      const draw = dr ? drawMap[dr.draw_id] : null;
+      const drawResultId = dr
+        ? {
+            matchTier: dr.match_tier,
+            prizeAmount: dr.prize_amount,
+            drawId: draw ? { month: draw.month, year: draw.year, numbers: draw.numbers } : null,
+          }
+        : null;
+
+      return {
+        ...w,
+        userId: profilesMap[w.user_id] || null,
+        user: profilesMap[w.user_id] || null,
+        drawResultId,
+        createdAt: w.created_at,
+        updatedAt: w.created_at,
+      };
+    });
+
+    res.json({ success: true, winners: enriched });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * GET /api/winners/my — current user's winnings
- */
 export const getMyWinnings = async (req, res, next) => {
   try {
     const { data: winners, error } = await supabase
-      .from('Winner')
-      .select(`
-        *,
-        drawResult:DrawResult (
-          matchTier,
-          prizeAmount,
-          draw:Draw (month, year, numbers)
-        )
-      `)
-      .eq('userId', req.user.userId)
-      .order('createdAt', { ascending: false });
+      .from('winners')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
-    res.json({ success: true, winners: winners || [] });
+    const drIds = [...new Set((winners || []).map((w) => w.draw_result_id).filter(Boolean))];
+    let drMap = {};
+    if (drIds.length) {
+      const { data: drs, error: drErr } = await supabase.from('draw_results').select('*').in('id', drIds);
+      if (drErr) throw drErr;
+      (drs || []).forEach((r) => {
+        drMap[r.id] = r;
+      });
+    }
+
+    const drawIds = [...new Set(Object.values(drMap).map((r) => r.draw_id).filter(Boolean))];
+    let drawMap = {};
+    if (drawIds.length) {
+      const { data: draws, error: dErr } = await supabase.from('draws').select('*').in('id', drawIds);
+      if (dErr) throw dErr;
+      (draws || []).forEach((d) => {
+        drawMap[d.id] = d;
+      });
+    }
+
+    const merged = (winners || []).map((w) => {
+      const dr = drMap[w.draw_result_id];
+      const draw = dr ? drawMap[dr.draw_id] : null;
+      return {
+        ...w,
+        drawResult: dr
+          ? {
+              matchTier: dr.match_tier,
+              prizeAmount: dr.prize_amount,
+              draw: draw
+                ? { month: draw.month, year: draw.year, numbers: draw.numbers }
+                : null,
+            }
+          : null,
+      };
+    });
+
+    res.json({ success: true, winners: merged });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * POST /api/winners/:id/proof — winner uploads proof image
- * Uses multer + Cloudinary middleware (handled in route).
- * Sets verificationStatus to "proof_uploaded".
- */
 export const uploadProof = async (req, res, next) => {
   try {
     const { data: winner, error: wErr } = await supabase
-      .from('Winner')
+      .from('winners')
       .select('*')
       .eq('id', req.params.id)
       .maybeSingle();
@@ -72,13 +135,11 @@ export const uploadProof = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Winner record not found.' });
     }
 
-    // Ownership check
-    if (winner.userId !== req.user.userId) {
+    if (winner.user_id !== req.user.id) {
       return res.status(403).json({ success: false, message: 'You can only upload proof for your own wins.' });
     }
 
-    // Only allow upload when proof_pending or rejected (re-upload)
-    if (!['proof_pending', 'rejected'].includes(winner.verificationStatus)) {
+    if (!['pending', 'rejected'].includes(winner.verification_status)) {
       return res.status(400).json({
         success: false,
         message: 'Proof upload not allowed in current state.',
@@ -89,23 +150,21 @@ export const uploadProof = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'No file uploaded.' });
     }
 
-    // Delete old proof from Cloudinary if re-uploading
-    if (winner.proofPublicId) {
+    if (winner.proof_public_id) {
       try {
-        await cloudinary.uploader.destroy(winner.proofPublicId, { type: 'private' });
+        await cloudinary.uploader.destroy(winner.proof_public_id, { type: 'private' });
       } catch {
-        // Non-critical — continue
+        /* non-fatal */
       }
     }
 
-    // Store Cloudinary info
     const { data: updatedWinner, error: uErr } = await supabase
-      .from('Winner')
+      .from('winners')
       .update({
-        proofUrl: req.file.path,
-        proofPublicId: req.file.filename,
-        verificationStatus: 'proof_uploaded',
-        adminNotes: '', // Clear rejection notes on re-upload
+        proof_url: req.file.path,
+        proof_public_id: req.file.filename,
+        verification_status: 'uploaded',
+        admin_notes: '',
       })
       .eq('id', winner.id)
       .select()
@@ -116,21 +175,17 @@ export const uploadProof = async (req, res, next) => {
     res.json({
       success: true,
       message: 'Proof uploaded successfully.',
-      verificationStatus: updatedWinner.verificationStatus,
+      verificationStatus: updatedWinner.verification_status,
     });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * GET /api/winners/:id/proof-url — generate a signed URL to view the proof
- * Only accessible by the winner themselves or an admin.
- */
 export const getProofUrl = async (req, res, next) => {
   try {
     const { data: winner, error: wErr } = await supabase
-      .from('Winner')
+      .from('winners')
       .select('*')
       .eq('id', req.params.id)
       .maybeSingle();
@@ -140,28 +195,20 @@ export const getProofUrl = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Winner record not found.' });
     }
 
-    // Check: must be owner or admin
-    const { data: user, error: uErr } = await supabase
-      .from('User')
-      .select('*')
-      .eq('id', req.user.userId)
-      .maybeSingle();
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', req.user.id).maybeSingle();
 
-    if (uErr) throw uErr;
+    const isOwner = winner.user_id === req.user.id;
+    const isAdminUser = profile?.role === 'admin';
 
-    const isOwner = winner.userId === req.user.userId;
-    const isAdmin = user?.role === 'admin';
-
-    if (!isOwner && !isAdmin) {
+    if (!isOwner && !isAdminUser) {
       return res.status(403).json({ success: false, message: 'Access denied.' });
     }
 
-    if (!winner.proofPublicId) {
+    if (!winner.proof_public_id) {
       return res.status(404).json({ success: false, message: 'No proof has been uploaded.' });
     }
 
-    // Generate signed URL (expires in 1 hour)
-    const signedUrl = cloudinary.url(winner.proofPublicId, {
+    const signedUrl = cloudinary.url(winner.proof_public_id, {
       type: 'private',
       sign_url: true,
       expires_at: Math.floor(Date.now() / 1000) + 3600,
@@ -173,29 +220,21 @@ export const getProofUrl = async (req, res, next) => {
   }
 };
 
-/**
- * POST /api/winners/:id/verify — admin: approve or reject
- * Body: { action: "approve" | "reject", adminNotes?: string }
- */
 export const verifyWinner = async (req, res, next) => {
   try {
     const { action, adminNotes } = req.body;
-    
-    const { data: winner, error: wErr } = await supabase
-      .from('Winner')
-      .select(`*, user:User(name, email)`)
-      .eq('id', req.params.id)
-      .maybeSingle();
+
+    const { data: winner, error: wErr } = await supabase.from('winners').select('*').eq('id', req.params.id).maybeSingle();
 
     if (wErr) throw wErr;
     if (!winner) {
       return res.status(404).json({ success: false, message: 'Winner record not found.' });
     }
 
-    // Helper formatting to access relation uniformly
-    winner.user = winner.user || winner.User;
+    const profiles = await loadProfilesByIds([winner.user_id]);
+    const userRow = profiles[winner.user_id];
 
-    if (winner.verificationStatus !== 'proof_uploaded') {
+    if (winner.verification_status !== 'uploaded') {
       return res.status(400).json({
         success: false,
         message: 'Can only verify winners with uploaded proof.',
@@ -206,44 +245,42 @@ export const verifyWinner = async (req, res, next) => {
 
     if (action === 'approve') {
       const { data, error } = await supabase
-        .from('Winner')
+        .from('winners')
         .update({
-          verificationStatus: 'approved',
-          payoutStatus: 'pending',
-          adminNotes: adminNotes || '',
+          verification_status: 'approved',
+          payout_status: 'pending',
+          admin_notes: adminNotes || '',
         })
         .eq('id', winner.id)
         .select()
         .single();
-        
+
       if (error) throw error;
       updatedWinner = data;
 
-      // Email winner
-      if (winner.user?.email) {
-        sendVerificationApproved({ ...updatedWinner, userId: winner.user }).catch(console.error);
+      if (userRow?.email) {
+        sendVerificationApproved({ userId: userRow }).catch(console.error);
       }
     } else if (action === 'reject') {
       const { data, error } = await supabase
-        .from('Winner')
+        .from('winners')
         .update({
-          verificationStatus: 'rejected',
-          adminNotes: adminNotes || 'Proof did not meet requirements.',
+          verification_status: 'rejected',
+          admin_notes: adminNotes || 'Proof did not meet requirements.',
         })
         .eq('id', winner.id)
         .select()
         .single();
-        
+
       if (error) throw error;
       updatedWinner = data;
 
-      // Email winner
-      if (winner.user?.email) {
+      if (userRow?.email) {
         sendEmail({
-          to: winner.user.email,
-          subject: 'Proof update required — Digital Heroes',
-          html: `<p>Hi ${winner.user.name},</p>
-                 <p>Your scorecard proof needs attention: <strong>${updatedWinner.adminNotes}</strong></p>
+          to: userRow.email,
+          subject: 'Proof update required — GolfHeroes',
+          html: `<p>Hi ${userRow.name.split(' ')[0]},</p>
+                 <p>Your scorecard proof needs attention: <strong>${updatedWinner.admin_notes}</strong></p>
                  <p>Please upload a new proof from your dashboard.</p>`,
         });
       }
@@ -260,25 +297,19 @@ export const verifyWinner = async (req, res, next) => {
   }
 };
 
-/**
- * POST /api/winners/:id/payout — admin: mark as paid
- */
 export const markPaid = async (req, res, next) => {
   try {
-    const { data: winner, error: wErr } = await supabase
-      .from('Winner')
-      .select(`*, user:User(name, email)`)
-      .eq('id', req.params.id)
-      .maybeSingle();
+    const { data: winner, error: wErr } = await supabase.from('winners').select('*').eq('id', req.params.id).maybeSingle();
 
     if (wErr) throw wErr;
     if (!winner) {
       return res.status(404).json({ success: false, message: 'Winner record not found.' });
     }
 
-    winner.user = winner.user || winner.User;
+    const profiles = await loadProfilesByIds([winner.user_id]);
+    const userRow = profiles[winner.user_id];
 
-    if (winner.verificationStatus !== 'approved') {
+    if (winner.verification_status !== 'approved') {
       return res.status(400).json({
         success: false,
         message: 'Winner must be approved before marking as paid.',
@@ -286,17 +317,16 @@ export const markPaid = async (req, res, next) => {
     }
 
     const { data: updatedWinner, error } = await supabase
-      .from('Winner')
-      .update({ payoutStatus: 'paid' })
+      .from('winners')
+      .update({ payout_status: 'paid' })
       .eq('id', winner.id)
       .select()
       .single();
-      
+
     if (error) throw error;
 
-    // Send confirmation email
-    if (winner.user?.email) {
-      sendPayoutConfirmed({ ...updatedWinner, userId: winner.user }).catch(console.error);
+    if (userRow?.email) {
+      sendPayoutConfirmed({ userId: userRow }).catch(console.error);
     }
 
     res.json({ success: true, winner: updatedWinner });

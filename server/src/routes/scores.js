@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   getMyScores,
   createScore,
@@ -14,11 +15,11 @@ const router = Router();
 router.use(verifyToken);
 
 // GET is available to all authenticated users (lets them see their scores even if lapsed)
-router.get('/', getMyScores);
+router.get('/', asyncHandler(getMyScores));
 
 // Mutations require an active subscription
-router.post('/', subscriptionGuard, createScore);
-router.put('/:id', subscriptionGuard, updateScore);
-router.delete('/:id', subscriptionGuard, deleteScore);
+router.post('/', subscriptionGuard, asyncHandler(createScore));
+router.put('/:id', subscriptionGuard, asyncHandler(updateScore));
+router.delete('/:id', subscriptionGuard, asyncHandler(deleteScore));
 
 export default router;

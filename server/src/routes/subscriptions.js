@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   createCheckout,
   createPortal,
@@ -11,8 +12,8 @@ const router = Router();
 // All subscription routes require authentication
 router.use(verifyToken);
 
-router.post('/create-checkout', createCheckout);
-router.post('/portal', createPortal);
-router.get('/status', getStatus);
+router.post('/create-checkout', asyncHandler(createCheckout));
+router.post('/portal', asyncHandler(createPortal));
+router.get('/status', asyncHandler(getStatus));
 
 export default router;

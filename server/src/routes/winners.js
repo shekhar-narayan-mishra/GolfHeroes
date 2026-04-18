@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   getWinners,
   getMyWinnings,
@@ -17,13 +18,13 @@ const router = Router();
 router.use(verifyToken);
 
 // User routes
-router.get('/my', getMyWinnings);
+router.get('/my', asyncHandler(getMyWinnings));
 router.post('/:id/proof', uploadProofMiddleware.single('proof'), uploadProof);
-router.get('/:id/proof-url', getProofUrl);
+router.get('/:id/proof-url', asyncHandler(getProofUrl));
 
 // Admin routes
-router.get('/', isAdmin, getWinners);
-router.post('/:id/verify', isAdmin, verifyWinner);
-router.post('/:id/payout', isAdmin, markPaid);
+router.get('/', isAdmin, asyncHandler(getWinners));
+router.post('/:id/verify', isAdmin, asyncHandler(verifyWinner));
+router.post('/:id/payout', isAdmin, asyncHandler(markPaid));
 
 export default router;

@@ -1,16 +1,18 @@
-import supabase, { supabaseAnon } from '../supabaseClient.js';
+import jwt from 'jsonwebtoken';
+import { supabase, supabaseAnon } from '../config/supabaseClient.js';
 import { sendWelcomeEmail } from '../services/emailService.js';
+import { profileToClient } from '../utils/profileMapper.js';
 
-/** Marks rows where credentials live in Supabase Auth, not in passwordHash. */
-const SUPABASE_AUTH_PLACEHOLDER = '__supabase_auth__';
+const JWT_EXPIRY = '7d';
 
-const stripPassword = (row) => {
-  if (!row) return row;
-  const { passwordHash: _, ...rest } = row;
-  return rest;
-};
+const signAppJwt = (profile) =>
+  jwt.sign(
+    { userId: profile.id, email: profile.email, role: profile.role },
+    process.env.JWT_SECRET,
+    { expiresIn: JWT_EXPIRY }
+  );
 
-async function upsertAppUserFromAuth(authUser, { name } = {}) {
+async function ensureProfileRow(authUser, name) {
   const displayName =
     name?.trim() ||
     authUser.user_metadata?.full_name ||
@@ -18,7 +20,7 @@ async function upsertAppUserFromAuth(authUser, { name } = {}) {
     (authUser.email ? authUser.email.split('@')[0] : 'Member');
 
   const { data: existing, error: findErr } = await supabase
-    .from('User')
+    .from('profiles')
     .select('*')
     .eq('id', authUser.id)
     .maybeSingle();
@@ -27,15 +29,14 @@ async function upsertAppUserFromAuth(authUser, { name } = {}) {
   if (existing) return existing;
 
   const { data: inserted, error: insertErr } = await supabase
-    .from('User')
+    .from('profiles')
     .insert([
       {
         id: authUser.id,
-        name: displayName,
         email: authUser.email,
-        passwordHash: SUPABASE_AUTH_PLACEHOLDER,
+        name: displayName,
         role: 'user',
-        subscriptionStatus: 'inactive',
+        subscription_status: 'inactive',
       },
     ])
     .select()
@@ -45,19 +46,21 @@ async function upsertAppUserFromAuth(authUser, { name } = {}) {
   return inserted;
 }
 
-/**
- * POST /api/auth/register — Supabase Auth signUp + public.User profile row.
- */
 export const register = async (req, res, next) => {
   try {
+    if (!supabaseAnon) {
+      return res.status(500).json({
+        success: false,
+        message: 'Server is missing SUPABASE_ANON_KEY for registration.',
+      });
+    }
+
     const { name, email, password } = req.body;
 
     const { data: signUpData, error: signUpError } = await supabaseAnon.auth.signUp({
       email,
       password,
-      options: {
-        data: { full_name: name, name },
-      },
+      options: { data: { full_name: name, name } },
     });
 
     if (signUpError) {
@@ -80,28 +83,24 @@ export const register = async (req, res, next) => {
 
     const authUser = signUpData.user;
     if (!authUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'Registration failed.',
-      });
+      return res.status(400).json({ success: false, message: 'Registration failed.' });
     }
 
-    let profile;
+    let profileRow;
     try {
-      profile = await upsertAppUserFromAuth(authUser, { name });
+      profileRow = await ensureProfileRow(authUser, name);
     } catch (e) {
       return res.status(500).json({
         success: false,
         message:
           e.message ||
-          'Account was created in Supabase Auth but the profile row could not be created. Check RLS and your User table schema.',
+          'Auth user was created but the profile row could not be inserted. Check Supabase schema and policies.',
       });
     }
 
     const session = signUpData.session;
-
     if (!session?.access_token) {
-      sendWelcomeEmail(profile).catch(console.error);
+      sendWelcomeEmail(profileToClient(profileRow)).catch(console.error);
       return res.status(201).json({
         success: true,
         needsConfirmation: true,
@@ -109,23 +108,28 @@ export const register = async (req, res, next) => {
       });
     }
 
-    sendWelcomeEmail(profile).catch(console.error);
+    sendWelcomeEmail(profileToClient(profileRow)).catch(console.error);
+    const token = signAppJwt(profileRow);
 
     res.status(201).json({
       success: true,
-      token: session.access_token,
-      user: stripPassword(profile),
+      token,
+      user: profileToClient(profileRow),
     });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * POST /api/auth/login — Supabase Auth password grant + app profile.
- */
 export const login = async (req, res, next) => {
   try {
+    if (!supabaseAnon) {
+      return res.status(500).json({
+        success: false,
+        message: 'Server is missing SUPABASE_ANON_KEY for login.',
+      });
+    }
+
     const { email, password } = req.body;
 
     const { data: signInData, error: signInError } = await supabaseAnon.auth.signInWithPassword({
@@ -133,64 +137,37 @@ export const login = async (req, res, next) => {
       password,
     });
 
-    if (signInError || !signInData.session?.access_token) {
+    if (signInError || !signInData.user) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password.',
       });
     }
 
-    const authUser = signInData.user;
-    let profile;
-
-    try {
-      profile = await upsertAppUserFromAuth(authUser);
-    } catch (e) {
-      return next(e);
-    }
+    const profileRow = await ensureProfileRow(signInData.user);
+    const token = signAppJwt(profileRow);
 
     res.json({
       success: true,
-      token: signInData.session.access_token,
-      user: stripPassword(profile),
+      token,
+      user: profileToClient(profileRow),
     });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * GET /api/auth/me — profile from public.User for the Supabase user id.
- */
 export const getMe = async (req, res, next) => {
   try {
-    const { data: user, error } = await supabase
-      .from('User')
-      .select('*')
-      .eq('id', req.user.userId)
-      .maybeSingle();
-
-    if (error) throw error;
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found.',
-      });
-    }
-
     res.json({
       success: true,
-      user: stripPassword(user),
+      user: req.user,
     });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * POST /api/auth/logout — session is cleared on the client; reserved for future server-side revoke.
- */
 export const logout = async (_req, res) => {
   res.json({
     success: true,

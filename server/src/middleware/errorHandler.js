@@ -1,39 +1,33 @@
-/**
- * Centralised error-handling middleware.
- * Express recognises this as an error handler because it has 4 parameters.
- */
 const errorHandler = (err, req, res, _next) => {
-  console.error('❌ Error:', err.stack || err.message);
+  console.error('[Error]', err.message);
 
-  // Mongoose validation error
-  if (err.name === 'ValidationError') {
-    const messages = Object.values(err.errors).map((e) => e.message);
-    return res.status(400).json({
-      success: false,
-      message: messages.join(', '),
-    });
+  if (err.code === '23505') {
+    return res.status(409).json({ success: false, message: 'A record already exists for this entry' });
+  }
+  if (err.code === '23503') {
+    return res.status(400).json({ success: false, message: 'Referenced record does not exist' });
+  }
+  if (err.code === '23514') {
+    return res.status(400).json({ success: false, message: 'Value is out of allowed range' });
+  }
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({ success: false, message: 'Invalid token' });
+  }
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({ success: false, message: 'Token expired, please log in again' });
+  }
+  if (err.type === 'StripeCardError') {
+    return res.status(402).json({ success: false, message: err.message });
+  }
+  if (err.type === 'StripeInvalidRequestError') {
+    return res.status(400).json({ success: false, message: 'Invalid payment request' });
+  }
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ success: false, message: 'File too large. Max 5MB' });
   }
 
-  // Mongoose duplicate key error
-  if (err.code === 11000) {
-    const field = Object.keys(err.keyValue).join(', ');
-    return res.status(409).json({
-      success: false,
-      message: `Duplicate value for: ${field}`,
-    });
-  }
-
-  // JWT errors (fallback — normally caught in verifyToken)
-  if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid or expired token.',
-    });
-  }
-
-  // Default
-  const statusCode = err.statusCode || 500;
-  res.status(statusCode).json({
+  const status = err.statusCode || err.status || 500;
+  res.status(status).json({
     success: false,
     message: err.message || 'Internal server error',
   });

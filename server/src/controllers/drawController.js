@@ -1,32 +1,52 @@
-import supabase from '../supabaseClient.js';
+import jwt from 'jsonwebtoken';
+import { supabase } from '../config/supabaseClient.js';
+import { profileToClient } from '../utils/profileMapper.js';
+import { drawToClient, drawResultRowToClient } from '../utils/drawMapper.js';
 import * as drawEngine from '../services/drawEngine.js';
 
-// ── Public Routes ─────────────────────────────────────────
+export async function optionalAuth(req, res, next) {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) {
+    req.user = null;
+    return next();
+  }
+  try {
+    const token = header.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', decoded.userId)
+      .maybeSingle();
+    req.user = profile ? profileToClient(profile) : null;
+  } catch {
+    req.user = null;
+  }
+  next();
+}
 
-/** GET /api/draws — list all draws (public: only published; admin: all) */
 export const getDraws = async (req, res, next) => {
   try {
     const isAdmin = req.user?.role === 'admin';
-    let query = supabase.from('Draw').select('*').order('year', { ascending: false }).order('month', { ascending: false });
-    
+    let query = supabase.from('draws').select('*').order('year', { ascending: false }).order('month', { ascending: false });
+
     if (!isAdmin) {
       query = query.eq('status', 'published');
     }
-    
+
     const { data: draws, error } = await query;
     if (error) throw error;
 
-    res.json({ success: true, draws: draws || [] });
+    res.json({ success: true, draws: (draws || []).map(drawToClient) });
   } catch (error) {
     next(error);
   }
 };
 
-/** GET /api/draws/:id — single draw with results */
 export const getDrawById = async (req, res, next) => {
   try {
     const { data: draw, error: drawErr } = await supabase
-      .from('Draw')
+      .from('draws')
       .select('*')
       .eq('id', req.params.id)
       .maybeSingle();
@@ -37,43 +57,40 @@ export const getDrawById = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Draw not found.' });
     }
 
-    // Non-admin can only see published draws
     const isAdmin = req.user?.role === 'admin';
     if (!isAdmin && draw.status !== 'published') {
       return res.status(404).json({ success: false, message: 'Draw not found.' });
     }
 
-    // Relational query targeting user profile
     const { data: results, error: resErr } = await supabase
-      .from('DrawResult')
-      .select(`
-        *,
-        user:User (
-          name,
-          email
-        )
-      `)
-      .eq('drawId', draw.id)
-      .order('matchTier', { ascending: false })
-      .order('prizeAmount', { ascending: false });
+      .from('draw_results')
+      .select('*')
+      .eq('draw_id', draw.id)
+      .order('match_tier', { ascending: false })
+      .order('prize_amount', { ascending: false });
 
     if (resErr) throw resErr;
 
-    // Formatting fallback in case Postgres casing acts up
-    const formattedResults = (results || []).map(r => ({
-      ...r,
-      user: r.user || r.User || { name: 'Unknown', email: '' }
-    }));
+    const userIds = [...new Set((results || []).map((r) => r.user_id))];
+    let profileMap = {};
+    if (userIds.length) {
+      const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, name, email').in('id', userIds);
+      if (pErr) throw pErr;
+      (profiles || []).forEach((p) => {
+        profileMap[p.id] = { name: p.name, email: p.email };
+      });
+    }
 
-    res.json({ success: true, draw, results: formattedResults });
+    const formattedResults = (results || []).map((r) =>
+      drawResultRowToClient(r, profileMap[r.user_id] || { name: 'Unknown', email: '' })
+    );
+
+    res.json({ success: true, draw: drawToClient(draw), results: formattedResults });
   } catch (error) {
     next(error);
   }
 };
 
-// ── Admin Routes ──────────────────────────────────────────
-
-/** POST /api/draws — create a new draw config for a month */
 export const createDraw = async (req, res, next) => {
   try {
     const { month, year, drawType, algorithmicBias } = req.body;
@@ -92,9 +109,8 @@ export const createDraw = async (req, res, next) => {
       });
     }
 
-    // Check for existing draw this month
     const { data: existing, error: existErr } = await supabase
-      .from('Draw')
+      .from('draws')
       .select('id')
       .eq('month', month)
       .eq('year', year)
@@ -110,26 +126,23 @@ export const createDraw = async (req, res, next) => {
       });
     }
 
-    // Calculate jackpot rollover from previous draws
     const jackpotRollover = await drawEngine.getJackpotRollover();
-
-    // Calculate initial prize pool
     const prizePool = await drawEngine.calculatePrizePool(jackpotRollover);
 
     const { data: draw, error: insertErr } = await supabase
-      .from('Draw')
+      .from('draws')
       .insert([
         {
           month,
           year,
-          drawType: drawType || 'random',
-          algorithmicBias: algorithmicBias || 'most',
-          jackpotRollover,
-          prizePoolTotal: prizePool.total,
-          prizePoolFirst: prizePool.tiers.first,
-          prizePoolSecond: prizePool.tiers.second,
-          prizePoolThird: prizePool.tiers.third,
-        }
+          draw_type: drawType || 'random',
+          algorithmic_bias: algorithmicBias || 'most',
+          jackpot_rollover: jackpotRollover,
+          prize_pool_total: prizePool.total,
+          prize_pool_first: prizePool.tiers.first,
+          prize_pool_second: prizePool.tiers.second,
+          prize_pool_third: prizePool.tiers.third,
+        },
       ])
       .select()
       .single();
@@ -138,7 +151,7 @@ export const createDraw = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      draw,
+      draw: drawToClient(draw),
       prizePoolDetails: prizePool,
     });
   } catch (error) {
@@ -146,21 +159,19 @@ export const createDraw = async (req, res, next) => {
   }
 };
 
-/** POST /api/draws/:id/simulate — run simulation, return preview */
 export const simulateDraw = async (req, res, next) => {
   try {
     const result = await drawEngine.simulateDraw(req.params.id);
-    res.json({ success: true, ...result });
+    res.json({ success: true, ...result, draw: drawToClient(result.draw) });
   } catch (error) {
     next(error);
   }
 };
 
-/** POST /api/draws/:id/publish — publish results (irreversible) */
 export const publishDraw = async (req, res, next) => {
   try {
     const result = await drawEngine.publishDraw(req.params.id);
-    res.json({ success: true, ...result });
+    res.json({ success: true, ...result, draw: drawToClient(result.draw) });
   } catch (error) {
     next(error);
   }

@@ -21,10 +21,7 @@ app.use(helmet());
 app.use(morgan('dev'));
 
 // ── CORS ─────────────────────────────────────────────────
-const allowedOrigins = [
-  'http://localhost:5173',
-  process.env.CLIENT_URL, // production frontend URL
-].filter(Boolean);
+const allowedOrigins = ['http://localhost:5173', process.env.FRONTEND_URL, process.env.CLIENT_URL].filter(Boolean);
 
 app.use(
   cors({
@@ -67,8 +64,8 @@ app.use('/api/contributions', contributionRoutes);
 app.use('/api/admin', adminRoutes);
 
 // ── 404 catch-all ────────────────────────────────────────
-app.use((_req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found.' });
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: `Route ${req.method} ${req.path} not found` });
 });
 
 // ── Centralised error handler (must be last) ─────────────

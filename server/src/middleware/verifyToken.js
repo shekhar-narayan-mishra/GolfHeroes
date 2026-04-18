@@ -1,44 +1,43 @@
-import { supabaseAnon } from '../supabaseClient.js';
+import jwt from 'jsonwebtoken';
+import { supabase } from '../config/supabaseClient.js';
+import { profileToClient } from '../utils/profileMapper.js';
 
 /**
- * Verifies a Supabase access token from Authorization: Bearer <token>
- * and attaches { userId, email } to req.user.
+ * Verifies JWT then loads the latest profile from Supabase (role, subscription, etc.).
  */
 const verifyToken = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({
-      success: false,
-      message: 'Access denied. No token provided.',
-    });
-  }
-
-  const token = authHeader.split(' ')[1];
-
   try {
-    const {
-      data: { user },
-      error,
-    } = await supabaseAnon.auth.getUser(token);
-
-    if (error || !user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid or expired token.',
-      });
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'No token provided' });
     }
 
-    req.user = {
-      userId: user.id,
-      email: user.email,
-    };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select(
+        'id, name, email, role, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_plan, subscription_expiry, charity_id, contribution_percent, country, currency, account_type, created_at'
+      )
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!profile) {
+      return res.status(401).json({ success: false, message: 'User not found' });
+    }
+
+    req.user = profileToClient(profile);
     next();
-  } catch {
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid or expired token.',
-    });
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ success: false, message: 'Token expired' });
+    }
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ success: false, message: 'Invalid token' });
+    }
+    next(err);
   }
 };
 

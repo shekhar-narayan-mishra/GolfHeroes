@@ -9,8 +9,8 @@ const MONTHS = [
 ];
 
 const STATUS_BADGE = {
-  proof_pending: { label: 'Proof Needed', cls: 'bg-warning/10 text-warning border-warning/20' },
-  proof_uploaded: { label: 'Under Review', cls: 'bg-brand-500/10 text-brand-400 border-brand-500/20' },
+  pending: { label: 'Proof Needed', cls: 'bg-warning/10 text-warning border-warning/20' },
+  uploaded: { label: 'Under Review', cls: 'bg-brand-500/10 text-brand-400 border-brand-500/20' },
   approved: { label: 'Approved', cls: 'bg-success/10 text-success border-success/20' },
   rejected: { label: 'Rejected', cls: 'bg-danger/10 text-danger border-danger/20' },
 };
@@ -49,22 +49,22 @@ export default function AdminWinners() {
   };
 
   const openDetail = async (winner) => {
-    if (selectedId === winner._id) {
+    if (selectedId === winner.id) {
       setSelectedId(null);
       setProofUrl('');
       return;
     }
-    setSelectedId(winner._id);
+    setSelectedId(winner.id);
     setProofUrl('');
-    setAdminNotes(winner.adminNotes || '');
+    setAdminNotes(winner.admin_notes || '');
     setError('');
     setSuccessMsg('');
 
     // Fetch signed proof URL
-    if (winner.proofPublicId || winner.verificationStatus !== 'proof_pending') {
+    if (winner.proof_public_id || winner.verification_status !== 'pending') {
       setProofLoading(true);
       try {
-        const { data } = await api.get(`/api/winners/${winner._id}/proof-url`);
+        const { data } = await api.get(`/api/winners/${winner.id}/proof-url`);
         setProofUrl(data.url);
       } catch {
         setProofUrl('');
@@ -107,7 +107,7 @@ export default function AdminWinners() {
     }
   };
 
-  const formatPence = (p) => `£${(p / 100).toFixed(2)}`;
+  const formatMoney = (p) => `£${Number(p || 0).toFixed(2)}`;
 
   return (
     <div>
@@ -127,8 +127,9 @@ export default function AdminWinners() {
           </div>
         ) : (
           <div className="glass rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
             {/* Table header */}
-            <div className="hidden md:grid grid-cols-[2fr_1.2fr_0.8fr_1fr_1fr_1fr] gap-4 px-6 py-3 border-b border-white/6 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="hidden md:grid grid-cols-[2fr_1.2fr_0.8fr_1fr_1fr_1fr] gap-4 px-6 py-3 border-b border-white/6 text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[720px]">
               <span>Winner</span>
               <span>Draw</span>
               <span>Tier</span>
@@ -137,17 +138,17 @@ export default function AdminWinners() {
               <span>Payout</span>
             </div>
 
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-white/5 min-w-[720px]">
               {winners.map((w) => {
                 const draw = w.drawResultId?.drawId;
                 const tier = w.drawResultId?.matchTier;
                 const amount = w.drawResultId?.prizeAmount || 0;
-                const vBadge = STATUS_BADGE[w.verificationStatus] || STATUS_BADGE.proof_pending;
-                const pBadge = PAYOUT_BADGE[w.payoutStatus] || PAYOUT_BADGE.pending;
-                const isSelected = selectedId === w._id;
+                const vBadge = STATUS_BADGE[w.verification_status] || STATUS_BADGE.pending;
+                const pBadge = PAYOUT_BADGE[w.payout_status] || PAYOUT_BADGE.pending;
+                const isSelected = selectedId === w.id;
 
                 return (
-                  <div key={w._id}>
+                  <div key={w.id}>
                     {/* Row */}
                     <button
                       onClick={() => openDetail(w)}
@@ -177,7 +178,7 @@ export default function AdminWinners() {
                         </span>
                       </div>
                       <p className="self-center text-sm font-bold text-success tabular-nums">
-                        {formatPence(amount)}
+                        {formatMoney(amount)}
                       </p>
                       <div className="self-center">
                         <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold border ${vBadge.cls}`}>
@@ -241,17 +242,17 @@ export default function AdminWinners() {
                             </div>
 
                             {/* Verify buttons */}
-                            {w.verificationStatus === 'proof_uploaded' && (
+                            {w.verification_status === 'uploaded' && (
                               <div className="flex gap-2 mb-4">
                                 <button
-                                  onClick={() => handleVerify(w._id, 'approve')}
+                                  onClick={() => handleVerify(w.id, 'approve')}
                                   disabled={actionLoading}
                                   className="flex-1 py-2.5 rounded-lg bg-success/15 text-success text-xs font-semibold hover:bg-success/25 disabled:opacity-50 transition-colors"
                                 >
                                   ✓ Approve
                                 </button>
                                 <button
-                                  onClick={() => handleVerify(w._id, 'reject')}
+                                  onClick={() => handleVerify(w.id, 'reject')}
                                   disabled={actionLoading}
                                   className="flex-1 py-2.5 rounded-lg bg-danger/15 text-danger text-xs font-semibold hover:bg-danger/25 disabled:opacity-50 transition-colors"
                                 >
@@ -261,9 +262,9 @@ export default function AdminWinners() {
                             )}
 
                             {/* Mark as paid */}
-                            {w.verificationStatus === 'approved' && w.payoutStatus === 'pending' && (
+                            {w.verification_status === 'approved' && w.payout_status === 'pending' && (
                               <button
-                                onClick={() => handlePayout(w._id)}
+                                onClick={() => handlePayout(w.id)}
                                 disabled={actionLoading}
                                 className="w-full py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 hover:brightness-110 disabled:opacity-50 transition-all"
                               >
@@ -271,7 +272,7 @@ export default function AdminWinners() {
                               </button>
                             )}
 
-                            {w.payoutStatus === 'paid' && (
+                            {w.payout_status === 'paid' && (
                               <div className="text-center py-3 text-success text-xs font-semibold">
                                 ✓ Payout completed
                               </div>
@@ -279,10 +280,7 @@ export default function AdminWinners() {
 
                             {/* Status info */}
                             <div className="mt-4 text-[10px] text-slate-600 space-y-1">
-                              <p>Created: {new Date(w.createdAt).toLocaleString('en-GB')}</p>
-                              {w.updatedAt !== w.createdAt && (
-                                <p>Updated: {new Date(w.updatedAt).toLocaleString('en-GB')}</p>
-                              )}
+                              <p>Created: {new Date(w.created_at || w.createdAt).toLocaleString('en-GB')}</p>
                             </div>
                           </div>
                         </div>
@@ -291,6 +289,7 @@ export default function AdminWinners() {
                   </div>
                 );
               })}
+            </div>
             </div>
           </div>
         )}
