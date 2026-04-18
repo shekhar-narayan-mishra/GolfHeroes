@@ -23,6 +23,16 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (err) => {
+    if (!err.response) {
+      // Missing response usually means CORS error or Server is totally down
+      err.response = {
+        data: {
+          message: 'Network Error: Cannot reach the backend API. Please ensure your Vercel backend has FRONTEND_URL set correctly, and you have Redeployed it.',
+        },
+      };
+      return Promise.reject(err);
+    }
+    
     if (err.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('dh_token');
