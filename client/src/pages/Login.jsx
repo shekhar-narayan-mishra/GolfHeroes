@@ -49,30 +49,25 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-mesh flex items-center justify-center px-4 py-12">
-      {/* Decorative orbs */}
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
-        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-brand-600/10 blur-[120px]" />
-        <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-brand-400/8 blur-[100px]" />
-      </div>
-
       <div className="w-full max-w-md">
         {/* Logo / Branding */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg shadow-brand-500/25 group-hover:shadow-brand-500/40 transition-shadow">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            <div className="w-10 h-10 rounded-[10px] flex items-center justify-center" style={{ backgroundColor: '#0f2409' }}>
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.9} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 3.5l1.9 3.86 4.26.62-3.08 2.99.72 4.23L11 13.3l-3.8 1.9.73-4.23-3.09-2.99 4.27-.62L11 3.5z" />
+                <path strokeLinecap="round" d="M11 13.3V21" />
               </svg>
             </div>
-            <span className="text-xl font-bold text-white tracking-tight">Digital Heroes</span>
+            <span className="text-xl font-bold tracking-tight" style={{ color: '#0f2409' }}>Golf Heroes</span>
           </Link>
         </div>
 
         {/* Card */}
-        <div className="glass rounded-2xl p-8 shadow-2xl shadow-black/20">
+        <div className="glass rounded-2xl p-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-white">Welcome back</h1>
-            <p className="text-sm text-slate-400 mt-1">Sign in to your account to continue</p>
+            <h1 className="text-2xl font-bold" style={{ color: '#0b1a08' }}>Welcome back</h1>
+            <p className="text-sm mt-1" style={{ color: '#5f7253' }}>Sign in to your account to continue</p>
           </div>
 
           {notice && (
@@ -93,7 +88,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {/* Email */}
             <div>
-              <label htmlFor="login-email" className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label htmlFor="login-email" className="block text-sm font-medium mb-1.5" style={{ color: '#334b2a' }}>
                 Email address
               </label>
               <input
@@ -104,13 +99,14 @@ export default function Login() {
                 onChange={handleChange}
                 autoComplete="email"
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 rounded-xl bg-surface-100/60 border border-white/8 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all"
+                className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all"
+                style={{ background: 'rgba(255,255,255,0.72)', borderColor: 'rgba(255,255,255,0.86)', color: '#0f2409' }}
               />
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="login-password" className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label htmlFor="login-password" className="block text-sm font-medium mb-1.5" style={{ color: '#334b2a' }}>
                 Password
               </label>
               <input
@@ -121,7 +117,8 @@ export default function Login() {
                 onChange={handleChange}
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl bg-surface-100/60 border border-white/8 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all"
+                className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all"
+                style={{ background: 'rgba(255,255,255,0.72)', borderColor: 'rgba(255,255,255,0.86)', color: '#0f2409' }}
               />
             </div>
 
@@ -129,7 +126,8 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white font-semibold shadow-lg shadow-brand-600/25 hover:shadow-brand-600/40 hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 rounded-xl text-white font-semibold active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+              style={{ backgroundColor: '#0f2409' }}
             >
               {isLoading ? (
                 <>
@@ -142,15 +140,15 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-slate-400">
+          <div className="mt-6 text-center text-sm" style={{ color: '#4d6641' }}>
             Don't have an account?{' '}
-            <Link to="/signup" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
+            <Link to="/signup" className="font-medium transition-colors" style={{ color: '#2d7020' }}>
               Create one
             </Link>
           </div>
         </div>
 
-        <p className="mt-6 text-center text-xs text-slate-600">
+        <p className="mt-6 text-center text-xs" style={{ color: '#5f7253' }}>
           By signing in you agree to our Terms of Service and Privacy Policy.
         </p>
       </div>

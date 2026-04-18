@@ -121,7 +121,6 @@ export default function AdminWinners() {
           </div>
         ) : winners.length === 0 ? (
           <div className="glass rounded-2xl p-12 text-center">
-            <span className="text-4xl mb-4 block">🏆</span>
             <h3 className="text-lg font-semibold text-white mb-1">No winners yet</h3>
             <p className="text-sm text-slate-500">Winners will appear here after draws are published.</p>
           </div>
@@ -268,7 +267,7 @@ export default function AdminWinners() {
                                 disabled={actionLoading}
                                 className="w-full py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 hover:brightness-110 disabled:opacity-50 transition-all"
                               >
-                                💰 Mark as Paid
+                                Mark as Paid
                               </button>
                             )}
 

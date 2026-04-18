@@ -68,7 +68,7 @@ export default function CharityProfile() {
     return (
       <div className="min-h-screen bg-mesh flex items-center justify-center px-4">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">Charity not found</h1>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: '#0b1a08' }}>Charity not found</h1>
           <Link to="/charities" className="text-brand-400 hover:text-brand-300 text-sm">← Back to charities</Link>
         </div>
       </div>
@@ -88,9 +88,9 @@ export default function CharityProfile() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
             </svg>
           </div>
-          <span className="text-lg font-bold text-white tracking-tight">Digital Heroes</span>
+          <span className="text-lg font-bold tracking-tight" style={{ color: '#0f2409' }}>Golf Heroes</span>
         </Link>
-        <Link to="/charities" className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white transition-colors">
+        <Link to="/charities" className="px-4 py-2 rounded-xl text-sm font-medium transition-colors" style={{ color: '#4d6641' }}>
           ← All Charities
         </Link>
       </nav>
@@ -113,20 +113,20 @@ export default function CharityProfile() {
             <div className="flex items-center gap-3 mb-4">
               {charity.featured && (
                 <span className="px-3 py-1 rounded-lg bg-success/10 text-success text-xs font-semibold">
-                  ⭐ Featured Charity
+                  Featured Charity
                 </span>
               )}
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">{charity.name}</h1>
-            <p className="text-slate-400 leading-relaxed mb-8 whitespace-pre-line">
+            <h1 className="text-3xl sm:text-4xl font-extrabold mb-4" style={{ color: '#0b1a08' }}>{charity.name}</h1>
+            <p className="leading-relaxed mb-8 whitespace-pre-line" style={{ color: '#4d6641' }}>
               {charity.description || 'No description available.'}
             </p>
 
             {/* Image gallery */}
             {charity.images && charity.images.length > 1 && (
               <div className="mb-8">
-                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Gallery</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: '#5f7253' }}>Gallery</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {charity.images.slice(1).map((img, i) => (
                     <div key={i} className="aspect-square rounded-xl overflow-hidden bg-surface-200/30">
@@ -140,7 +140,7 @@ export default function CharityProfile() {
             {/* Events */}
             {charity.events && charity.events.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Upcoming Events</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: '#5f7253' }}>Upcoming Events</h3>
                 <div className="space-y-3">
                   {charity.events.map((event, i) => (
                     <div key={i} className="glass rounded-xl p-4 flex items-start gap-4">
@@ -153,8 +153,8 @@ export default function CharityProfile() {
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-white">{event.title}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{event.description}</p>
+                        <p className="text-sm font-semibold" style={{ color: '#0b1a08' }}>{event.title}</p>
+                        <p className="text-xs mt-0.5" style={{ color: '#5f7253' }}>{event.description}</p>
                       </div>
                     </div>
                   ))}
@@ -166,15 +166,16 @@ export default function CharityProfile() {
           {/* Sidebar — Donation card */}
           <div>
             <div className="glass rounded-2xl p-6 sticky top-6">
-              <h3 className="text-lg font-semibold text-white mb-1">Make a donation</h3>
-              <p className="text-xs text-slate-500 mb-5">One-off contribution to {charity.name}</p>
+              <h3 className="text-lg font-semibold mb-1" style={{ color: '#0b1a08' }}>Make a donation</h3>
+              <p className="text-xs mb-5" style={{ color: '#5f7253' }}>One-off contribution to {charity.name}</p>
 
               {donateSuccess ? (
                 <div className="rounded-xl bg-success/10 border border-success/20 p-4 text-center">
-                  <p className="text-success font-semibold text-sm">Thank you for your donation! 💚</p>
+                  <p className="text-success font-semibold text-sm">Thank you for your donation.</p>
                   <button
                     onClick={() => setDonateSuccess(false)}
-                    className="text-xs text-slate-500 mt-2 hover:text-white transition-colors"
+                    className="text-xs mt-2 transition-colors"
+                    style={{ color: '#5f7253' }}
                   >
                     Donate again
                   </button>
@@ -196,8 +197,9 @@ export default function CharityProfile() {
                         className={`py-2 rounded-lg text-sm font-medium transition-all ${
                           donateAmount === amt
                             ? 'bg-success/15 text-success border border-success/20'
-                            : 'bg-surface-100/60 border border-white/8 text-slate-400 hover:text-white'
+                            : 'border text-[#4d6641]'
                         }`}
+                        style={donateAmount !== amt ? { background: 'rgba(255,255,255,0.7)', borderColor: 'rgba(255,255,255,0.85)' } : undefined}
                       >
                         £{amt}
                       </button>
@@ -206,13 +208,14 @@ export default function CharityProfile() {
 
                   {/* Custom amount */}
                   <div className="relative mb-5">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">£</span>
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style={{ color: '#5f7253' }}>£</span>
                     <input
                       type="number"
                       min={1}
                       value={donateAmount}
                       onChange={(e) => { setDonateAmount(e.target.value); setDonateError(''); }}
-                      className="w-full pl-8 pr-4 py-3 rounded-xl bg-surface-100/60 border border-white/8 text-white focus:outline-none focus:ring-2 focus:ring-success/50 tabular-nums text-sm"
+                      className="w-full pl-8 pr-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/40 tabular-nums text-sm"
+                      style={{ background: 'rgba(255,255,255,0.72)', borderColor: 'rgba(255,255,255,0.86)', color: '#0f2409' }}
                     />
                   </div>
 
@@ -223,9 +226,7 @@ export default function CharityProfile() {
                   >
                     {donating ? (
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      '💚'
-                    )}
+                    ) : null}
                     {donating ? 'Processing…' : `Donate £${donateAmount || '0'}`}
                   </button>
                 </>

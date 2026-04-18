@@ -57,21 +57,21 @@ export default function UserDraws() {
       {/* How it works compact */}
       <div className="glass rounded-2xl p-6 mb-8 flex flex-col md:flex-row gap-4 justify-between text-sm">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">🎯</span>
+          <span className="inline-flex w-8 h-8 rounded-full items-center justify-center text-sm font-semibold bg-white/10 text-slate-300">5</span>
           <div>
             <p className="font-semibold text-warning">5-Number Match</p>
             <p className="text-xs text-slate-500">40% pool (jackpot)</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-2xl">🎲</span>
+          <span className="inline-flex w-8 h-8 rounded-full items-center justify-center text-sm font-semibold bg-white/10 text-slate-300">4</span>
           <div>
             <p className="font-semibold text-brand-400">4-Number Match</p>
             <p className="text-xs text-slate-500">35% pool</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-2xl">✨</span>
+          <span className="inline-flex w-8 h-8 rounded-full items-center justify-center text-sm font-semibold bg-white/10 text-slate-300">3</span>
           <div>
             <p className="font-semibold text-slate-300">3-Number Match</p>
             <p className="text-xs text-slate-500">25% pool</p>
@@ -85,7 +85,6 @@ export default function UserDraws() {
         </div>
       ) : draws.length === 0 ? (
         <div className="glass rounded-2xl p-12 text-center">
-          <span className="text-4xl mb-4 block">🎰</span>
           <h3 className="text-lg font-semibold text-white mb-1">No draws yet</h3>
           <p className="text-sm text-slate-500">Check back at the end of the month for the first prize draw!</p>
         </div>
@@ -100,7 +99,9 @@ export default function UserDraws() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-600/20 to-brand-500/10 border border-brand-500/15 flex items-center justify-center">
-                      <span className="text-lg">🏆</span>
+                      <svg className="w-5 h-5 text-brand-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.7} stroke="currentColor" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872" />
+                      </svg>
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-white">{MONTHS[draw.month - 1]} {draw.year}</h3>

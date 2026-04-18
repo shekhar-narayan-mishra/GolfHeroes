@@ -97,7 +97,10 @@ export default function MyWinnings() {
     <div className="glass rounded-2xl overflow-hidden">
       <div className="px-6 py-4 border-b border-white/6 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-          <span>🏆</span> Your Winnings
+          <svg className="w-5 h-5 text-warning" fill="none" viewBox="0 0 24 24" strokeWidth={1.7} stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872" />
+          </svg>
+          Your Winnings
         </h3>
         <span className="text-xs text-slate-500">{winnings.length} win{winnings.length !== 1 ? 's' : ''}</span>
       </div>
@@ -227,7 +230,7 @@ export default function MyWinnings() {
               {/* Payout status for approved winners */}
               {w.verificationStatus === 'approved' && (
                 <div className={`mt-2 text-xs font-semibold ${payout.color}`}>
-                  {w.payoutStatus === 'paid' ? '✓ Payout sent' : '⏳ Awaiting payout'}
+                  {w.payoutStatus === 'paid' ? 'Payout sent' : 'Awaiting payout'}
                 </div>
               )}
             </div>

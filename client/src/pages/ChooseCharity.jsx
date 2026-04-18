@@ -103,13 +103,15 @@ export default function ChooseCharity() {
                     {c.images && c.images[0] ? (
                       <img src={c.images[0]} alt={c.name} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-lg">💚</span>
+                      <svg className="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 20s-7-4.8-7-10a4 4 0 0 1 7-2.3A4 4 0 0 1 19 10c0 5.2-7 10-7 10z" />
+                      </svg>
                     )}
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-white truncate">{c.name}</h3>
                     {c.featured && (
-                      <span className="text-[10px] text-success font-semibold">⭐ Featured</span>
+                      <span className="text-[10px] text-success font-semibold">Featured</span>
                     )}
                   </div>
                   {selected === c._id && (

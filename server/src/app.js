@@ -45,7 +45,15 @@ app.post(
 );
 
 // ── Body Parsing ─────────────────────────────────────────
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ 
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    // Preserve raw buffer for Stripe Webhooks
+    if (req.originalUrl.startsWith('/api/webhooks/stripe')) {
+      req.rawBody = buf.toString('utf8');
+    }
+  }
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // ── Health check ─────────────────────────────────────────

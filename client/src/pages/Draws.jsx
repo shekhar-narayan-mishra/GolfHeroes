@@ -84,12 +84,12 @@ export default function Draws() {
           <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">How It Works</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { icon: '🎯', label: '5-Number Match', desc: '40% of prize pool (jackpot)', color: 'text-warning' },
-              { icon: '🎲', label: '4-Number Match', desc: '35% of prize pool', color: 'text-brand-400' },
-              { icon: '✨', label: '3-Number Match', desc: '25% of prize pool', color: 'text-slate-300' },
+              { icon: '5', label: '5-Number Match', desc: '40% of prize pool (jackpot)', color: 'text-warning' },
+              { icon: '4', label: '4-Number Match', desc: '35% of prize pool', color: 'text-brand-400' },
+              { icon: '3', label: '3-Number Match', desc: '25% of prize pool', color: 'text-slate-300' },
             ].map((t) => (
               <div key={t.label} className="text-center">
-                <span className="text-2xl">{t.icon}</span>
+                <span className="inline-flex w-8 h-8 rounded-full items-center justify-center text-sm font-semibold bg-white/10 text-slate-300">{t.icon}</span>
                 <p className={`text-sm font-semibold mt-1 ${t.color}`}>{t.label}</p>
                 <p className="text-xs text-slate-500">{t.desc}</p>
               </div>
@@ -104,7 +104,6 @@ export default function Draws() {
           </div>
         ) : draws.length === 0 ? (
           <div className="glass rounded-2xl p-12 text-center">
-            <span className="text-4xl mb-4 block">🎰</span>
             <h3 className="text-lg font-semibold text-white mb-1">No draws yet</h3>
             <p className="text-sm text-slate-500">Check back at the end of the month for the first prize draw!</p>
           </div>
@@ -119,7 +118,9 @@ export default function Draws() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-600/20 to-brand-500/10 border border-brand-500/15 flex items-center justify-center">
-                        <span className="text-lg">🏆</span>
+                        <svg className="w-5 h-5 text-brand-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.7} stroke="currentColor" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872" />
+                        </svg>
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-white">{MONTHS[draw.month - 1]} {draw.year}</h3>

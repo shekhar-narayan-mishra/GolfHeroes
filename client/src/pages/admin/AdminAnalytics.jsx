@@ -63,7 +63,7 @@ export default function AdminAnalytics() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="glass rounded-2xl p-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10 blur-sm">
-            <span className="text-6xl">👥</span>
+            <span className="text-6xl font-black">U</span>
           </div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 relative z-10">Active Subscribers</p>
           <p className="text-3xl font-bold text-white tabular-nums relative z-10">{data.activeSubscribers}</p>
@@ -71,7 +71,7 @@ export default function AdminAnalytics() {
 
         <div className="glass rounded-2xl p-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10 blur-sm">
-            <span className="text-6xl">🎰</span>
+            <span className="text-6xl font-black">D</span>
           </div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 relative z-10">Curr. Prize Pool</p>
           <p className="text-3xl font-bold text-brand-400 tabular-nums relative z-10">{formatPence(data.currentPrizePool)}</p>
@@ -79,7 +79,7 @@ export default function AdminAnalytics() {
 
         <div className="glass rounded-2xl p-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10 blur-sm">
-            <span className="text-6xl">💚</span>
+            <span className="text-6xl font-black">C</span>
           </div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 relative z-10">Total Charity impact</p>
           <p className="text-3xl font-bold text-success tabular-nums relative z-10">{formatPence(data.totalCharityContributions)}</p>
@@ -87,7 +87,7 @@ export default function AdminAnalytics() {
 
         <div className="glass rounded-2xl p-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10 blur-sm">
-            <span className="text-6xl">📈</span>
+            <span className="text-6xl font-black">P</span>
           </div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 relative z-10">Draw Participation</p>
           <p className="text-3xl font-bold text-warning tabular-nums relative z-10">{data.participationRate}%</p>

@@ -139,7 +139,9 @@ export default function Dashboard() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center group-hover:bg-warning/20 transition-colors">
-                <span className="text-lg">🎰</span>
+                <svg className="w-5 h-5 text-warning" fill="none" viewBox="0 0 24 24" strokeWidth={1.7} stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+                </svg>
               </div>
               <h3 className="text-sm font-semibold text-white group-hover:text-warning transition-colors">Draws</h3>
             </div>
@@ -152,7 +154,9 @@ export default function Dashboard() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center group-hover:bg-success/20 transition-colors">
-                <span className="text-lg">💚</span>
+                <svg className="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={1.7} stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 20s-7-4.8-7-10a4 4 0 0 1 7-2.3A4 4 0 0 1 19 10c0 5.2-7 10-7 10z" />
+                </svg>
               </div>
               <h3 className="text-sm font-semibold text-white group-hover:text-success transition-colors">Charities</h3>
             </div>
@@ -199,7 +203,9 @@ export default function Dashboard() {
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
-                  <span className="text-lg">🏆</span>
+                  <svg className="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={1.7} stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872" />
+                  </svg>
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white group-hover:text-success transition-colors">Verify Winners</h3>

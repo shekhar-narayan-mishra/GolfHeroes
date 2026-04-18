@@ -87,7 +87,9 @@ export default function CharitySettings() {
             {selectedCharity?.images?.[0] ? (
               <img src={selectedCharity.images[0]} alt="" className="w-full h-full rounded-xl object-cover" />
             ) : (
-              <span className="text-lg">💚</span>
+              <svg className="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 20s-7-4.8-7-10a4 4 0 0 1 7-2.3A4 4 0 0 1 19 10c0 5.2-7 10-7 10z" />
+              </svg>
             )}
           </div>
           <div className="min-w-0 flex-1">
@@ -112,7 +114,7 @@ export default function CharitySettings() {
           <option value="">Select a charity…</option>
           {charities.map((c) => (
             <option key={c._id} value={c._id}>
-              {c.name} {c.featured ? '⭐' : ''}
+              {c.name} {c.featured ? '(Featured)' : ''}
             </option>
           ))}
         </select>

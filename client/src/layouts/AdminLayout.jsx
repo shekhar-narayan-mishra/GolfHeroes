@@ -24,7 +24,11 @@ export default function AdminLayout() {
     return (
       <div className="min-h-screen bg-mesh flex items-center justify-center p-6 text-center">
         <div>
-          <span className="text-4xl block mb-4">⛔</span>
+          <span className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.35)' }}>
+            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.9} stroke="#b45309" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15M4.5 4.5l15 15" />
+            </svg>
+          </span>
           <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
           <p className="text-slate-400 mb-6">You must be an administrator to view this area.</p>
           <button onClick={() => navigate('/dashboard')} className="px-6 py-2 bg-brand-500 rounded-xl text-white font-medium hover:bg-brand-400 transition">Return to Dashboard</button>
@@ -43,7 +47,9 @@ export default function AdminLayout() {
           aria-label="Open menu"
           onClick={() => setSidebarOpen(true)}
         >
-          ☰
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
         </button>
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">

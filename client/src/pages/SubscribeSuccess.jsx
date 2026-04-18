@@ -55,13 +55,13 @@ export default function SubscribeSuccess() {
           <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">What's unlocked</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { icon: '📊', label: 'Score tracking' },
-              { icon: '🎰', label: 'Prize draws' },
-              { icon: '💚', label: 'Charity giving' },
-              { icon: '🏆', label: 'Leaderboards' },
+              { badge: 'S', label: 'Score tracking' },
+              { badge: 'D', label: 'Prize draws' },
+              { badge: 'C', label: 'Charity giving' },
+              { badge: 'L', label: 'Leaderboards' },
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-3 text-sm text-slate-300">
-                <span className="text-lg">{item.icon}</span>
+                <span className="inline-flex w-6 h-6 rounded-full items-center justify-center text-[11px] font-semibold bg-white/10 text-slate-200">{item.badge}</span>
                 {item.label}
               </div>
             ))}

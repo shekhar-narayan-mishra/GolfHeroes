@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -29,15 +29,26 @@ const AdminDraws = lazy(() => import('./pages/AdminDraws'));
 const AdminWinners = lazy(() => import('./pages/AdminWinners'));
 
 const PageFallback = () => (
-  <div className="flex items-center justify-center min-h-screen bg-slate-950 text-slate-400 text-sm">
-    Loading…
+  <div className="flex items-center justify-center min-h-screen bg-mesh text-[#3a5a2e] text-sm">
+    Loading...
   </div>
 );
+
+function ScrollToTopOnRouteChange() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [pathname]);
+
+  return null;
+}
 
 function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
+        <ScrollToTopOnRouteChange />
         <AuthProvider>
           <Suspense fallback={<PageFallback />}>
             <Routes>

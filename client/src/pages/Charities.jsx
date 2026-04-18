@@ -43,17 +43,17 @@ export default function Charities() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
             </svg>
           </div>
-          <span className="text-lg font-bold text-white tracking-tight">Digital Heroes</span>
+          <span className="text-lg font-bold tracking-tight" style={{ color: '#0f2409' }}>Golf Heroes</span>
         </Link>
-        <Link to="/dashboard" className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white transition-colors">
+        <Link to="/dashboard" className="px-4 py-2 rounded-xl text-sm font-medium transition-colors" style={{ color: '#4d6641' }}>
           Dashboard
         </Link>
       </nav>
 
       <main className="relative z-10 max-w-6xl mx-auto px-6 pt-6 pb-24">
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-extrabold text-white tracking-tight mb-3">Our Charities</h1>
-          <p className="text-slate-400 max-w-lg mx-auto">
+          <h1 className="text-4xl font-extrabold tracking-tight mb-3" style={{ color: '#0b1a08' }}>Our Charities</h1>
+          <p className="max-w-lg mx-auto" style={{ color: '#4d6641' }}>
             A portion of every subscription goes directly to the charities you choose.
           </p>
         </div>
@@ -61,7 +61,7 @@ export default function Charities() {
         {/* Search & Filter */}
         <div className="flex flex-col sm:flex-row items-center gap-3 mb-8 max-w-xl mx-auto">
           <div className="relative flex-1 w-full">
-            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#6e8462' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
             <input
@@ -69,7 +69,8 @@ export default function Charities() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search charities…"
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-surface-100/60 border border-white/8 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all text-sm"
+              className="w-full pl-10 pr-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-brand-500/40 transition-all text-sm"
+              style={{ background: 'rgba(255,255,255,0.72)', borderColor: 'rgba(255,255,255,0.85)', color: '#0f2409' }}
             />
           </div>
           <button
@@ -77,10 +78,11 @@ export default function Charities() {
             className={`px-4 py-3 rounded-xl text-sm font-medium transition-all shrink-0 ${
               showFeatured
                 ? 'bg-success/15 text-success border border-success/20'
-                : 'bg-surface-100/60 border border-white/8 text-slate-400 hover:text-white'
+                : 'border text-[#4d6641]'
             }`}
+            style={!showFeatured ? { background: 'rgba(255,255,255,0.72)', borderColor: 'rgba(255,255,255,0.85)' } : undefined}
           >
-            ⭐ Featured
+            Featured
           </button>
         </div>
 
@@ -91,9 +93,8 @@ export default function Charities() {
           </div>
         ) : charities.length === 0 ? (
           <div className="glass rounded-2xl p-12 text-center">
-            <span className="text-4xl mb-4 block">💚</span>
-            <h3 className="text-lg font-semibold text-white mb-1">No charities found</h3>
-            <p className="text-sm text-slate-500">
+            <h3 className="text-lg font-semibold mb-1" style={{ color: '#0b1a08' }}>No charities found</h3>
+            <p className="text-sm" style={{ color: '#5f7253' }}>
               {search ? 'Try a different search term.' : 'Charities will appear here once added.'}
             </p>
           </div>
@@ -114,7 +115,9 @@ export default function Charities() {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
-                    <div className="text-4xl">💚</div>
+                    <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" strokeWidth={1.9} stroke="#2d7020" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 20s-7-4.8-7-10a4 4 0 0 1 7-2.3A4 4 0 0 1 19 10c0 5.2-7 10-7 10z" />
+                    </svg>
                   )}
                 </div>
 
@@ -126,15 +129,15 @@ export default function Charities() {
                       </span>
                     )}
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-1 group-hover:text-brand-300 transition-colors">
+                  <h3 className="text-lg font-semibold mb-1 transition-colors" style={{ color: '#0b1a08' }}>
                     {charity.name}
                   </h3>
-                  <p className="text-sm text-slate-400 line-clamp-2">
+                  <p className="text-sm line-clamp-2" style={{ color: '#4d6641' }}>
                     {charity.description || 'Supporting those who need it most.'}
                   </p>
                   {charity.events && charity.events.length > 0 && (
-                    <p className="text-xs text-slate-500 mt-3">
-                      📅 {charity.events.length} upcoming event{charity.events.length !== 1 ? 's' : ''}
+                    <p className="text-xs mt-3" style={{ color: '#5f7253' }}>
+                      {charity.events.length} upcoming event{charity.events.length !== 1 ? 's' : ''}
                     </p>
                   )}
                 </div>
