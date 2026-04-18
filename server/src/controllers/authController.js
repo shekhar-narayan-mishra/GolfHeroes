@@ -57,10 +57,11 @@ export const register = async (req, res, next) => {
 
     const { name, email, password } = req.body;
 
-    const { data: signUpData, error: signUpError } = await supabaseAnon.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
       email,
       password,
-      options: { data: { full_name: name, name } },
+      email_confirm: true,
+      user_metadata: { full_name: name, name },
     });
 
     if (signUpError) {
@@ -98,16 +99,8 @@ export const register = async (req, res, next) => {
       });
     }
 
-    const session = signUpData.session;
-    if (!session?.access_token) {
-      sendWelcomeEmail(profileToClient(profileRow)).catch(console.error);
-      return res.status(201).json({
-        success: true,
-        needsConfirmation: true,
-        message: 'Check your email to confirm your account, then sign in.',
-      });
-    }
-
+    // Admins bypass email limits and the 'needsConfirmation' phase entirely
+    // Wait for the profile to be ready and send the welcome email
     sendWelcomeEmail(profileToClient(profileRow)).catch(console.error);
     const token = signAppJwt(profileRow);
 
