@@ -52,15 +52,41 @@ export default function Login() {
       <div className="w-full max-w-md">
         {/* Logo / Branding */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-[10px] flex items-center justify-center" style={{ backgroundColor: '#0f2409' }}>
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.9} stroke="currentColor">
+          <Link to="/" className="inline-flex items-center gap-3 group">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-xl shadow-brand-500/20" style={{ backgroundColor: '#0f2409' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.8" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11 3.5l1.9 3.86 4.26.62-3.08 2.99.72 4.23L11 13.3l-3.8 1.9.73-4.23-3.09-2.99 4.27-.62L11 3.5z" />
                 <path strokeLinecap="round" d="M11 13.3V21" />
               </svg>
             </div>
-            <span className="text-xl font-bold tracking-tight" style={{ color: '#0f2409' }}>Golf Heroes</span>
+            <span className="text-2xl font-bold tracking-tight text-[#0f2409]">Golf Heroes</span>
           </Link>
+        </div>
+
+        {/* Quick Access for Evaluators */}
+        <div className="mb-6 p-4 rounded-2xl bg-[#0f2409]/5 border border-[#0f2409]/10">
+          <div className="flex items-center gap-2 mb-3 text-[#0f2409] font-bold text-xs uppercase tracking-widest">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+            Evaluator Quick Access
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button 
+              onClick={() => setForm({ email: 'user@test.com', password: 'Test@1234' })}
+              className="p-3 rounded-xl bg-white/60 hover:bg-white border border-white/80 text-left transition-all group"
+            >
+              <p className="text-[10px] font-bold text-brand-700 uppercase tracking-tight">Standard User</p>
+              <p className="text-xs text-slate-600 mt-0.5">user@test.com</p>
+            </button>
+            <button 
+              onClick={() => setForm({ email: 'admin@test.com', password: 'Admin@1234' })}
+              className="p-3 rounded-xl bg-white/60 hover:bg-white border border-white/80 text-left transition-all group"
+            >
+              <p className="text-[10px] font-bold text-warning-700 uppercase tracking-tight">Admin Access</p>
+              <p className="text-xs text-slate-600 mt-0.5">admin@test.com</p>
+            </button>
+          </div>
         </div>
 
         {/* Card */}
@@ -69,6 +95,7 @@ export default function Login() {
             <h1 className="text-2xl font-bold" style={{ color: '#0b1a08' }}>Welcome back</h1>
             <p className="text-sm mt-1" style={{ color: '#5f7253' }}>Sign in to your account to continue</p>
           </div>
+
 
           {notice && (
             <div className="mb-4 px-4 py-3 rounded-xl bg-brand-600/10 border border-brand-500/25 text-brand-200 text-sm" role="status">

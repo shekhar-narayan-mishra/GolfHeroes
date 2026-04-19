@@ -476,7 +476,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, delay: 0.67 }}
-            className="hidden md:block absolute left-1/2 -translate-x-1/2 top-[24%]"
+            className="hidden lg:block absolute left-[15%] bottom-[22%]"
           >
             <Motion.div
               animate={{ y: [0, -8, 0] }}
