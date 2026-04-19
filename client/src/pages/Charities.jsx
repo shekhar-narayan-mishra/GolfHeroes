@@ -92,9 +92,9 @@ export default function Charities() {
             <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : charities.length === 0 ? (
-          <div className="glass rounded-2xl p-12 text-center">
-            <h3 className="text-lg font-semibold mb-1" style={{ color: '#0b1a08' }}>No charities found</h3>
-            <p className="text-sm" style={{ color: '#5f7253' }}>
+          <div className="glass rounded-[24px] p-12 text-center max-w-2xl mx-auto border border-white/10">
+            <h3 className="text-xl font-bold mb-2 text-white">No charities found</h3>
+            <p className="text-sm text-slate-400">
               {search ? 'Try a different search term.' : 'Charities will appear here once added.'}
             </p>
           </div>

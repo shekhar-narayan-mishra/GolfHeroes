@@ -92,8 +92,8 @@ export default function Login() {
         {/* Card */}
         <div className="glass rounded-2xl p-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold" style={{ color: '#0b1a08' }}>Welcome back</h1>
-            <p className="text-sm mt-1" style={{ color: '#5f7253' }}>Sign in to your account to continue</p>
+            <h1 className="text-2xl font-bold text-white">Welcome back</h1>
+            <p className="text-sm mt-1 text-slate-400">Sign in to your account to continue</p>
           </div>
 
 
@@ -115,7 +115,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {/* Email */}
             <div>
-              <label htmlFor="login-email" className="block text-sm font-medium mb-1.5" style={{ color: '#334b2a' }}>
+              <label htmlFor="login-email" className="block text-sm font-medium mb-1.5 text-slate-300">
                 Email address
               </label>
               <input
@@ -126,14 +126,13 @@ export default function Login() {
                 onChange={handleChange}
                 autoComplete="email"
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all"
-                style={{ background: 'rgba(255,255,255,0.72)', borderColor: 'rgba(255,255,255,0.86)', color: '#0f2409' }}
+                className="w-full px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all bg-white/5 text-white placeholder:text-slate-500"
               />
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="login-password" className="block text-sm font-medium mb-1.5" style={{ color: '#334b2a' }}>
+              <label htmlFor="login-password" className="block text-sm font-medium mb-1.5 text-slate-300">
                 Password
               </label>
               <input
@@ -144,8 +143,7 @@ export default function Login() {
                 onChange={handleChange}
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all"
-                style={{ background: 'rgba(255,255,255,0.72)', borderColor: 'rgba(255,255,255,0.86)', color: '#0f2409' }}
+                className="w-full px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all bg-white/5 text-white placeholder:text-slate-500"
               />
             </div>
 
@@ -153,8 +151,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 rounded-xl text-white font-semibold active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-              style={{ backgroundColor: '#0f2409' }}
+              className="w-full py-3 px-4 rounded-xl font-semibold active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-400 text-white shadow-lg shadow-brand-500/20"
             >
               {isLoading ? (
                 <>
@@ -167,15 +164,15 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm" style={{ color: '#4d6641' }}>
+          <div className="mt-6 text-center text-sm text-slate-400">
             Don't have an account?{' '}
-            <Link to="/signup" className="font-medium transition-colors" style={{ color: '#2d7020' }}>
+            <Link to="/signup" className="font-medium text-brand-400 hover:text-brand-300 transition-colors">
               Create one
             </Link>
           </div>
         </div>
 
-        <p className="mt-6 text-center text-xs" style={{ color: '#5f7253' }}>
+        <p className="mt-6 text-center text-xs text-slate-500">
           By signing in you agree to our Terms of Service and Privacy Policy.
         </p>
       </div>

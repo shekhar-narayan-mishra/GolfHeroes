@@ -57,22 +57,22 @@ export default function Signup() {
       <div className="w-full max-w-md">
         {/* Logo / Branding */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-[10px] flex items-center justify-center" style={{ backgroundColor: '#0f2409' }}>
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.9} stroke="currentColor">
+          <Link to="/" className="inline-flex items-center gap-3 group">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-xl shadow-brand-500/20" style={{ backgroundColor: '#0f2409' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.8" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11 3.5l1.9 3.86 4.26.62-3.08 2.99.72 4.23L11 13.3l-3.8 1.9.73-4.23-3.09-2.99 4.27-.62L11 3.5z" />
                 <path strokeLinecap="round" d="M11 13.3V21" />
               </svg>
             </div>
-            <span className="text-xl font-bold tracking-tight" style={{ color: '#0f2409' }}>Golf Heroes</span>
+            <span className="text-2xl font-bold tracking-tight text-[#0f2409]">Golf Heroes</span>
           </Link>
         </div>
 
         {/* Card */}
         <div className="glass rounded-2xl p-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold" style={{ color: '#0b1a08' }}>Create your account</h1>
-            <p className="text-sm mt-1" style={{ color: '#5f7253' }}>Join the platform — track, win, and give back</p>
+            <h1 className="text-2xl font-bold text-white">Create your account</h1>
+            <p className="text-sm mt-1 text-slate-400">Join the platform — track, win, and give back</p>
           </div>
 
           {error && (
@@ -87,7 +87,7 @@ export default function Signup() {
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {/* Name */}
             <div>
-              <label htmlFor="signup-name" className="block text-sm font-medium mb-1.5" style={{ color: '#334b2a' }}>
+              <label htmlFor="signup-name" className="block text-sm font-medium mb-1.5 text-slate-300">
                 Full name
               </label>
               <input
@@ -98,14 +98,13 @@ export default function Signup() {
                 onChange={handleChange}
                 autoComplete="name"
                 placeholder="John Doe"
-                className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all"
-                style={{ background: 'rgba(255,255,255,0.72)', borderColor: 'rgba(255,255,255,0.86)', color: '#0f2409' }}
+                className="w-full px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all bg-white/5 text-white placeholder:text-slate-500"
               />
             </div>
 
             {/* Email */}
             <div>
-              <label htmlFor="signup-email" className="block text-sm font-medium mb-1.5" style={{ color: '#334b2a' }}>
+              <label htmlFor="signup-email" className="block text-sm font-medium mb-1.5 text-slate-300">
                 Email address
               </label>
               <input
@@ -116,14 +115,13 @@ export default function Signup() {
                 onChange={handleChange}
                 autoComplete="email"
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all"
-                style={{ background: 'rgba(255,255,255,0.72)', borderColor: 'rgba(255,255,255,0.86)', color: '#0f2409' }}
+                className="w-full px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all bg-white/5 text-white placeholder:text-slate-500"
               />
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="signup-password" className="block text-sm font-medium mb-1.5" style={{ color: '#334b2a' }}>
+              <label htmlFor="signup-password" className="block text-sm font-medium mb-1.5 text-slate-300">
                 Password
               </label>
               <input
@@ -134,14 +132,13 @@ export default function Signup() {
                 onChange={handleChange}
                 autoComplete="new-password"
                 placeholder="Minimum 8 characters"
-                className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all"
-                style={{ background: 'rgba(255,255,255,0.72)', borderColor: 'rgba(255,255,255,0.86)', color: '#0f2409' }}
+                className="w-full px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all bg-white/5 text-white placeholder:text-slate-500"
               />
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label htmlFor="signup-confirm" className="block text-sm font-medium mb-1.5" style={{ color: '#334b2a' }}>
+              <label htmlFor="signup-confirm" className="block text-sm font-medium mb-1.5 text-slate-300">
                 Confirm password
               </label>
               <input
@@ -152,8 +149,7 @@ export default function Signup() {
                 onChange={handleChange}
                 autoComplete="new-password"
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all"
-                style={{ background: 'rgba(255,255,255,0.72)', borderColor: 'rgba(255,255,255,0.86)', color: '#0f2409' }}
+                className="w-full px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all bg-white/5 text-white placeholder:text-slate-500"
               />
             </div>
 
@@ -181,8 +177,7 @@ export default function Signup() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 rounded-xl text-white font-semibold active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 mt-6"
-              style={{ backgroundColor: '#0f2409' }}
+              className="w-full py-3 px-4 rounded-xl font-semibold active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 mt-6 bg-brand-500 hover:bg-brand-400 text-white shadow-lg shadow-brand-500/20"
             >
               {isLoading ? (
                 <>
@@ -195,15 +190,15 @@ export default function Signup() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm" style={{ color: '#4d6641' }}>
+          <div className="mt-6 text-center text-sm text-slate-400">
             Already have an account?{' '}
-            <Link to="/login" className="font-medium transition-colors" style={{ color: '#2d7020' }}>
+            <Link to="/login" className="font-medium text-brand-400 hover:text-brand-300 transition-colors">
               Sign in
             </Link>
           </div>
         </div>
 
-        <p className="mt-6 text-center text-xs" style={{ color: '#5f7253' }}>
+        <p className="mt-6 text-center text-xs text-slate-500">
           By creating an account you agree to our Terms of Service and Privacy Policy.
         </p>
       </div>

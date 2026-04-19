@@ -61,18 +61,18 @@ export default function DashboardLayout() {
 
       {/* Sidebar — slide-over on mobile */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-50 w-64 border-r border-white/6 flex-col bg-[#0b1220] md:bg-transparent flex transition-transform duration-200 md:translate-x-0 ${
+        className={`fixed md:static inset-y-0 left-0 z-50 w-64 border-r border-[#050a14] md:border-white/10 flex-col bg-[#050a14] md:bg-[#050a14]/90 md:backdrop-blur-xl flex transition-transform duration-200 md:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="px-6 py-6 border-b border-white/6">
+        <div className="px-6 py-6 border-b border-white/10">
           <div className="flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
               </svg>
             </div>
-            <span className="font-bold text-white tracking-wide">Digital Heroes</span>
+            <span className="font-bold text-white tracking-wide">Golf Heroes</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -179,10 +179,12 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-h-0 overflow-y-auto pb-20 md:pb-0">
+      <main className="flex-1 flex flex-col min-h-0 overflow-y-auto pb-20 md:pb-0 relative z-10">
         <div className="flex-1 w-full max-w-5xl mx-auto p-4 md:p-8 lg:p-10">
           <SubscriptionBanner />
-          <Outlet />
+          <div className="glass rounded-3xl p-6 md:p-8 mt-2 min-h-[500px]">
+            <Outlet />
+          </div>
         </div>
       </main>
 
